@@ -90,3 +90,13 @@ function deleteUser(req, res, next) {
             next(err);
         });
 }
+
+function createItem(req, res, next) {
+    db.one('INSERT INTO Item VALUES (${name}, ${description}, ${category}, ${location}, ${status})', req.body) //add image later as well
+    .then(data => {
+        res.send(data);
+    })
+    .catch(err => {
+        next(err);
+    });
+}
