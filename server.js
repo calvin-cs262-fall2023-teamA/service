@@ -23,6 +23,7 @@ router.get("/users/:id", readUser);
 router.put("/users/:id", updateUser);
 router.post('/users', createUser);
 router.delete('/users/:id', deleteUser);
+router.post('/item', createItem);
 
 app.use(router);
 app.listen(port, () => console.log(`Listening on port ${port}`));
