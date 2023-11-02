@@ -25,7 +25,7 @@ CREATE TABLE Item (
     category varchar(50),
     location varchar(50),
     status varchar(50)
-    --image BLOB
+    image BLOB --should be an expo-image-picker ImagePickerResult type
 	);
 
 CREATE TABLE UserItem (
