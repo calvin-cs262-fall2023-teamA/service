@@ -25,7 +25,7 @@ router.get("/users/:id", readUser);
 router.put("/users/:id", updateUser);
 router.post('/users', createUser);
 router.delete('/users/:id', deleteUser);
-router.post('/item', createItem);
+router.post('/items', createItems);
 
 app.use(router);
 app.listen(port, () => console.log(`Listening on port ${port}`));
@@ -123,7 +123,7 @@ function readItems(req, res, next) {
         })
 }
 
-function createItem(req, res, next) {
+function createItems(req, res, next) {
     db.one('INSERT INTO Item VALUES (${name}, ${description}, ${category}, ${location}, ${status})', req.body) //add image later as well
     .then(data => {
         res.send(data);
