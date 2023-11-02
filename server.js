@@ -106,7 +106,7 @@ function readItems(req, res, next) {
 }
 
 function createItems(req, res, next) {
-    db.one('INSERT INTO Item (name, description, category, location, image, status) VALUES (${name}, ${description}, ${category}, ${location}, ${image}, ${status})', req.body) //add image later as well
+    db.one('INSERT INTO Item (name, description, category, location, postUser, claimUser) VALUES (${name}, ${description}, ${category}, ${location}, ${name}, null)', req.body) //add image later as well
     .then(data => {
         res.send(data);
     })
