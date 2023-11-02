@@ -25,7 +25,6 @@ router.get("/users/:id", readUser);
 router.put("/users/:id", updateUser);
 router.post('/users', createUser);
 router.delete('/users/:id', deleteUser);
-router.get("/item", readItem);
 router.post('/item', createItem);
 
 app.use(router);
@@ -114,7 +113,7 @@ function deleteUser(req, res, next) {
         });
 }
 
-function readItem(req, res, next) {
+function readItems(req, res, next) {
     db.many("SELECT * FROM Item")
         .then(data => {
             res.send(data);
