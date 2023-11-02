@@ -20,12 +20,12 @@ router.use(express.json());
 
 router.get("/", readHelloMessage);
 router.get("/users", readUsers);
-router.get("/item", readItem);
+router.get("/items", readItems);
 router.get("/users/:id", readUser);
 router.put("/users/:id", updateUser);
 router.post('/users', createUser);
 router.delete('/users/:id', deleteUser);
-router.post('/item', createItem);
+router.post('/items', createItems);
 router.post("/login", handleLogin)
 
 app.use(router);
