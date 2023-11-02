@@ -28,6 +28,10 @@ router.delete('/users/:id', deleteUser);
 router.post('/items', createItems);
 router.post("/login", handleLogin)
 
+//profile page
+router.get("/items/post/:postUser", readPostedItems) //posted items
+router.get("/items/claim/:claimUser", readClaimedItems) //claimed items
+
 app.use(router);
 app.listen(port, () => console.log(`Listening on port ${port}`));
 
@@ -98,7 +102,7 @@ function deleteUser(req, res, next) {
 function readItems(req, res, next) {
     db.many("SELECT * FROM Item")
         .then(data => {
-            res.send(data);
+            returnDataOr404(res, data);
         })
         .catch(err => {
             next(err);
@@ -106,13 +110,33 @@ function readItems(req, res, next) {
 }
 
 function createItems(req, res, next) {
-    db.one('INSERT INTO Item (name, description, category, location, postUser, claimUser) VALUES (${name}, ${description}, ${category}, ${location}, ${postUser}, ${claimUser})', req.body) //add image later as well
+    db.one('INSERT INTO Item (name, description, category, location, lostFound, postUser, claimUser) VALUES (${name}, ${description}, ${category}, ${location}, ${lostFound}, ${postUser}, ${claimUser})', req.body) //add image later as well
     .then(data => {
         res.send(data);
     })
     .catch(err => {
         next(err);
     });
+}
+
+function readPostedItems(req, res, next) {
+    db.many("SELECT * FROM Item WHERE postUser=${postUser}", req.params) //should not return values where item.claimuser = item.postuser (indicates a deleted item.)
+        .then(data => {
+            returnDataOr404(res, data);
+        })
+        .catch(err => {
+            next(err);
+        })
+}
+
+function readClaimedItems(req, res, next) {
+    db.many("SELECT * FROM Item WHERE claimUser=${claimUser}", req.params) //should not return values where item.claimuser = item.postuser (indicates a deleted item.)
+        .then(data => {
+            returnDataOr404(res, data);
+        })
+        .catch(err => {
+            next(err);
+        })
 }
 
 // Implement the user authentication route

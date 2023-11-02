@@ -10,7 +10,7 @@ DROP TABLE IF EXISTS Item;
 
 -- User is a reserved word, so we need to use double quotations around it "User"
 CREATE TABLE Users (
-	ID integer PRIMARY KEY, 
+	ID SERIAL PRIMARY KEY, 
 	emailAddress varchar(50) NOT NULL,
 	name varchar(50),
     password varchar(50),
@@ -23,8 +23,8 @@ CREATE TABLE Item (
     description varchar(50),
     category varchar(50),
     location varchar(50),
-    --status varchar(50) --replaced by postUser and claimUser
-	--if both postUser and claimUser are filled (not null), it is "claimed" and should be removed from search results
+    lostFound varchar(50), -- Post is a Lost or Found Item
+	--if both postUser and claimUser are filled (not null), it is "claimed" and should be removed from general search results
 	postUser varchar(50), --a name (Users.name) of a user. "owner/finder"
 	claimUser varchar(50) --a name (Users.name) of a user. "owner/finder"
 	--image BLOB, --should be an expo-image-picker ImagePickerResult type
