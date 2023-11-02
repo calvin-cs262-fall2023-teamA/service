@@ -20,12 +20,13 @@ router.use(express.json());
 
 router.get("/", readHelloMessage);
 router.get("/users", readUsers);
-router.get("/items", readItems);
+router.get("/item", readItem);
 router.get("/users/:id", readUser);
 router.put("/users/:id", updateUser);
 router.post('/users', createUser);
 router.delete('/users/:id', deleteUser);
-router.post('/items', createItems);
+router.post('/item', createItem);
+router.post("/login", handleLogin)
 
 app.use(router);
 app.listen(port, () => console.log(`Listening on port ${port}`));
@@ -52,25 +53,6 @@ function readUsers(req, res, next) {
         .catch(err => {
             next(err);
         })
-
-    // const { emailAddress, password } = req.query;
-
-    // db.oneOrNone('SELECT * FROM Users WHERE emailAddress = $1', [emailAddress])
-    //     .then(user => {
-    //         if (!user) {
-    //             return res.status(401).json({ message: 'User not found' });
-    //         }
-
-    //         if (user.password === password) {
-    //             return res.status(200).json({ message: 'Login successful' });
-    //         } else {
-    //             return res.status(401).json({ message: 'Incorrect password' });
-    //         }
-    //     })
-    //     .catch(error => {
-    //         console.error(error);
-    //         return res.status(500).json({ message: 'An error occurred during login' });
-    //     });
 }
 
 function readUser(req, res, next) {
@@ -132,3 +114,29 @@ function createItems(req, res, next) {
         next(err);
     });
 }
+
+// Implement the user authentication route
+async function handleLogin(req, res) {
+    const { emailAddress, password } = req.body;
+  
+    try {
+      // Query the database to find the user by email
+      const user = await db.oneOrNone('SELECT * FROM Users WHERE emailAddress = $1', emailAddress);
+  
+      if (!user) {
+        // User not found
+        return res.status(401).json({ message: 'User not found' });
+      }
+  
+      if (user.password === password) {
+        // Password matches, user is authenticated
+        return res.status(200).json({ message: 'Login successful' });
+      } else {
+        // Incorrect password
+        return res.status(401).json({ message: 'Incorrect password' });
+      }
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: 'An error occurred during login' });
+    }
+  }
