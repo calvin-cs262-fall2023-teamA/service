@@ -32,6 +32,9 @@ router.post("/login", handleLogin)
 router.get("/items/post/:postUser", readPostedItems) //posted items
 router.get("/items/claim/:claimUser", readClaimedItems) //claimed items
 
+//search
+router.get("/items/:name", searchItems) //search term in body.
+
 app.use(router);
 app.listen(port, () => console.log(`Listening on port ${port}`));
 
@@ -101,6 +104,16 @@ function deleteUser(req, res, next) {
 
 function readItems(req, res, next) {
     db.many("SELECT * FROM Item")
+        .then(data => {
+            returnDataOr404(res, data);
+        })
+        .catch(err => {
+            next(err);
+        })
+}
+
+function searchItems(req, res, next) {
+    db.many("SELECT * FROM Item WHERE name LIKE '%" + req.params.name + "%'", req.params)
         .then(data => {
             returnDataOr404(res, data);
         })
