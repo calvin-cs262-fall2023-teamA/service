@@ -20,6 +20,7 @@ router.use(express.json());
 
 router.get("/", readHelloMessage);
 router.get("/users", readUsers);
+router.get("/items", readItems);
 router.get("/users/:id", readUser);
 router.put("/users/:id", updateUser);
 router.post('/users', createUser);
@@ -44,7 +45,7 @@ function readHelloMessage(req, res) {
     res.send('Welcome to Calvin Finds!');
 }
 
- function readUsers(req, res, next) {
+function readUsers(req, res, next) {
     db.many("SELECT * FROM Users")
         .then(data => {
             res.send(data);
@@ -52,6 +53,25 @@ function readHelloMessage(req, res) {
         .catch(err => {
             next(err);
         })
+
+    // const { emailAddress, password } = req.query;
+
+    // db.oneOrNone('SELECT * FROM Users WHERE emailAddress = $1', [emailAddress])
+    //     .then(user => {
+    //         if (!user) {
+    //             return res.status(401).json({ message: 'User not found' });
+    //         }
+
+    //         if (user.password === password) {
+    //             return res.status(200).json({ message: 'Login successful' });
+    //         } else {
+    //             return res.status(401).json({ message: 'Incorrect password' });
+    //         }
+    //     })
+    //     .catch(error => {
+    //         console.error(error);
+    //         return res.status(500).json({ message: 'An error occurred during login' });
+    //     });
 }
 
 function readUser(req, res, next) {
@@ -75,7 +95,7 @@ function updateUser(req, res, next) {
 }
 
 function createUser(req, res, next) {
-    db.one('INSERT INTO Users(email, name) VALUES (${email}, ${name}) RETURNING id', req.body)
+    db.one('INSERT INTO Users(name, emailAddress, password, type) VALUES (${name}, ${email}, ${password}, ${type}) RETURNING id', req.body)
         .then(data => {
             res.send(data);
         })
