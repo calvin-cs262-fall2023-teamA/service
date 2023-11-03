@@ -143,7 +143,7 @@ function readPostedItems(req, res, next) {
 }
 
 function readClaimedItems(req, res, next) {
-    db.many("SELECT * FROM Item WHERE claimUser=${claimUser}", req.params) //should not return values where item.claimuser = item.postuser (indicates a deleted item.)
+    db.many("SELECT * FROM Item WHERE claimUser='" + req.params.claimUser + "'", req.params) //should not return values where item.claimuser = item.postuser (indicates a deleted item.)
         .then(data => {
             returnDataOr404(res, data);
         })
