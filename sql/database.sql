@@ -39,6 +39,8 @@ GRANT SELECT ON Users TO PUBLIC;
 GRANT SELECT ON Item TO PUBLIC;
 
 -- Add sample records.
+-- The sample records are not manually added to the database as it has been implemented in the app.
+
 -- INSERT INTO Users VALUES (1, 'admin@calvin.edu', 'Admin', 'password', 'Admin');
 -- INSERT INTO Users VALUES (2, 'aj37@calvin.edu', 'Aishwarya Joshi', 'password', 'Standard');
 
