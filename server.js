@@ -40,7 +40,7 @@ router.get("/items/post/:postUser", readPostedItems) //posted items
 router.get("/items/claim/:claimUser", readClaimedItems) //claimed items
 
 //search
-router.get("/items/:name", searchItems) //search term in body.
+router.get("/items/search/:name", searchItems) //search term in url
 
 app.use(router);
 app.listen(port, () => console.log(`Listening on port ${port}`));
