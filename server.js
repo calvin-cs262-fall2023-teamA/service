@@ -19,13 +19,20 @@ const router = express.Router();
 router.use(express.json());
 
 router.get("/", readHelloMessage);
+
+//user functions
 router.get("/users", readUsers);
-router.get("/items", readItems);
 router.get("/users/:id", readUser);
 router.put("/users/:id", updateUser);
 router.post('/users', createUser);
 router.delete('/users/:id', deleteUser);
+
+//item functions
+router.get("/items", readItems);
+router.get("/items/:id", readItem);
 router.post('/items', createItems);
+
+//login functions
 router.post("/login", handleLogin)
 
 //profile page
@@ -150,6 +157,16 @@ function readClaimedItems(req, res, next) {
         .catch(err => {
             next(err);
         })
+}
+
+function readItem(req, res, next) {
+    db.oneOrNone('SELECT * FROM Item WHERE id=${id}', req.params)
+        .then(data => {
+            returnDataOr404(res, data);
+        })
+        .catch(err => {
+            next(err);
+        });
 }
 
 // Implement the user authentication route
