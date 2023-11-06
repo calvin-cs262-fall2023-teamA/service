@@ -56,7 +56,7 @@ function returnDataOr404(res, data) {
 }
 
 function readHelloMessage(req, res) {
-    res.send('Welcome to Calvin Finds!');
+    res.send('Welcome to CalvinFinds!');
 }
 
 function readUsers(req, res, next) {
