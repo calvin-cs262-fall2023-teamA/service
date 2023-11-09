@@ -141,7 +141,7 @@ function searchItems(req, res, next) {
 }
 
 function createItems(req, res, next) {
-    db.one('INSERT INTO Item (name, description, category, location, lostFound, datePosted, postUser, claimUser, archieved, itemImage) VALUES (${name}, ${description}, ${category}, ${location}, ${lostFound}, ${datePosted}, ${postUser}, ${claimUser}, ${archieved}, ${itemImage})', req.body) //add image later as well
+    db.one('INSERT INTO Item (name, description, category, location, lostFound, datePosted, postUser, claimUser, archived, itemImage) VALUES (${name}, ${description}, ${category}, ${location}, ${lostFound}, ${datePosted}, ${postUser}, ${claimUser}, ${archived}, ${itemImage})', req.body) //add image later as well
     .then(data => {
         res.send(data);
     })

@@ -28,7 +28,7 @@ CREATE TABLE Item (
 	datePosted varchar(50), -- format MM/DD/YYYY
     postUser integer, --an id of a user. "owner/finder"
 	claimUser integer, --an id of a user. "owner/finder"
-    archieved BOOLEAN, --for removing listings from search results
+    archived BOOLEAN, --for removing listings from search results
 	itemImage varchar(50) --for storing directory path (to placeholders). temporary solution.
 	--image bytea, --should just be a uri that can be used in an expo image component. images should not be stored directly in this table. make a new table or reference a file.
     );
