@@ -18,6 +18,11 @@ const port = process.env.PORT || 3000;
 const router = express.Router();
 router.use(express.json());
 
+//for uploading images
+const fs = require('fs'); //filesystem
+const multer = require('multer'); //may or may not be necessary
+const upload = multer({ dest: 'uploads/' }); //ditto
+
 router.get("/", readHelloMessage);
 
 //user functions
@@ -31,6 +36,7 @@ router.delete('/users/:id', deleteUser);
 router.get("/items", readItems);
 router.get("/items/:id", readItem);
 router.post('/items', createItems);
+router.patch('/item/upload/image', uploadImage);
 
 //login functions
 router.post("/login", handleLogin)
@@ -137,6 +143,16 @@ function createItems(req, res, next) {
     .catch(err => {
         next(err);
     });
+}
+
+function uploadImage(req, res, next) {
+    //current idea: store the image in the filesystem using a particular directory name then store that directory name in the database.
+        //https://docs.expo.dev/versions/latest/sdk/filesystem/#server-handling-multipart-requests
+    app.patch('/binary-upload', (req, res) => {
+        req.pipe(fs.createWriteStream('./uploads/image' + Date.now() + '.png'));
+        res.end('OK');
+      });
+      
 }
 
 function readPostedItems(req, res, next) {
