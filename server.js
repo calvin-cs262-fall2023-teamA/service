@@ -26,7 +26,7 @@ router.get("/users/:id", readUser);
 router.put("/users/:id", updateUser);
 router.post('/users', createUser);
 router.delete('/users/:id', deleteUser);
-
+router.get("/users/email/:email", readUserFromEmail);
 //item functions
 router.get("/items", readItems);
 router.get("/items/:id", readItem);
@@ -77,6 +77,17 @@ function readUser(req, res, next) {
         .catch(err => {
             next(err);
         });
+}
+
+function readUserFromEmail(req, res, next) {
+    const email = req.params.email; // Extract the email address from the request
+    db.oneOrNone("SELECT * FROM Users WHERE emailaddress='" + req.params.email + "'", req.params)
+        .then(data => {
+        returnDataOr404(res, data);
+    })
+    .catch(err => {
+        next(err);
+    });
 }
 
 function updateUser(req, res, next) {
@@ -130,7 +141,7 @@ function searchItems(req, res, next) {
 }
 
 function createItems(req, res, next) {
-    db.one('INSERT INTO Item (name, description, category, location, lostFound, postUser, claimUser) VALUES (${name}, ${description}, ${category}, ${location}, ${lostFound}, ${postUser}, ${claimUser})', req.body) //add image later as well
+    db.one('INSERT INTO Item (name, description, category, location, lostFound, datePosted, postUser, claimUser, archieved, itemImage) VALUES (${name}, ${description}, ${category}, ${location}, ${lostFound}, ${datePosted}, ${postUser}, ${claimUser}, ${archieved}, ${itemImage})', req.body) //add image later as well
     .then(data => {
         res.send(data);
     })
