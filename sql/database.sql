@@ -18,17 +18,20 @@ CREATE TABLE Users (
 	);
 
 CREATE TABLE Item (
-	ID integer PRIMARY KEY,
+	ID SERIAL PRIMARY KEY,
     name varchar(50),
     description varchar(50),
     category varchar(50),
     location varchar(50),
     lostFound varchar(50), -- Post is a Lost or Found Item
-	--if both postUser and claimUser are filled (not null), it is "claimed" and should be removed from general search results
-	postUser varchar(50), --a name (Users.name) of a user. "owner/finder"
-	claimUser varchar(50) --a name (Users.name) of a user. "owner/finder"
-	--image BLOB, --should be an expo-image-picker ImagePickerResult type
-	);
+    --if both postUser and claimUser are filled (not null), it is "claimed" and should be removed from general search results
+	datePosted varchar(50), -- format MM/DD/YYYY
+    postUser integer, --an id of a user. "owner/finder"
+	claimUser integer, --an id of a user. "owner/finder"
+    archived BOOLEAN, --for removing listings from search results
+	itemImage varchar(50) --for storing directory path (to placeholders). temporary solution.
+	--image bytea, --should just be a uri that can be used in an expo image component. images should not be stored directly in this table. make a new table or reference a file.
+    );
 
 
 
