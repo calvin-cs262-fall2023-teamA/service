@@ -161,7 +161,7 @@ function readPostedItems(req, res, next) {
 }
 
 function readClaimedItems(req, res, next) {
-    db.many("SELECT * FROM Item WHERE claimUser='" + req.params.claimUser + "'", req.params) //should not return values where item.claimuser = item.postuser (indicates a deleted item.)
+    db.many("SELECT * FROM Item WHERE postUser='" + req.params.claimUser + "' AND archived=TRUE", req.params) //returns archived items, not claimed. will refactor later.
         .then(data => {
             returnDataOr404(res, data);
         })
