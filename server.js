@@ -37,10 +37,10 @@ router.post("/login", handleLogin)
 
 //profile page
 router.get("/items/post/:postUser", readPostedItems) //posted items
-router.get("/items/claim/:claimUser", readClaimedItems) //claimed items
+router.get("/items/archived/:postuser", readArchivedItems) //claimed items
 
 //search
-router.get("/items/search/:name", searchItems) //search term in url
+router.get("/items/search/:title", searchItems) //search term in url
 
 app.use(router);
 app.listen(port, () => console.log(`Listening on port ${port}`));
@@ -121,7 +121,7 @@ function deleteUser(req, res, next) {
 }
 
 function readItems(req, res, next) {
-    db.many("SELECT * FROM Item")
+    db.many("SELECT Item.*, Users.name FROM Item, Users WHERE Users.id=postuser")
         .then(data => {
             returnDataOr404(res, data);
         })
@@ -131,7 +131,7 @@ function readItems(req, res, next) {
 }
 
 function searchItems(req, res, next) {
-    db.many("SELECT * FROM Item WHERE name LIKE '%" + req.params.name + "%'", req.params)
+    db.many("SELECT Item.*, Users.name FROM Item, Users WHERE Users.id=postuser AND title LIKE '%" + req.params.title + "%'", req.params)
         .then(data => {
             returnDataOr404(res, data);
         })
@@ -141,7 +141,7 @@ function searchItems(req, res, next) {
 }
 
 function createItems(req, res, next) {
-    db.one('INSERT INTO Item (name, description, category, location, lostFound, datePosted, postUser, claimUser, archived, itemImage) VALUES (${name}, ${description}, ${category}, ${location}, ${lostFound}, ${datePosted}, ${postUser}, ${claimUser}, ${archived}, ${itemImage})', req.body) //add image later as well
+    db.one('INSERT INTO Item (title, description, category, location, lostFound, datePosted, postUser, claimUser, archived, itemImage) VALUES (${title}, ${description}, ${category}, ${location}, ${lostFound}, ${datePosted}, ${postUser}, ${claimUser}, ${archived}, ${itemImage})', req.body) //add image later as well
     .then(data => {
         res.send(data);
     })
@@ -151,7 +151,7 @@ function createItems(req, res, next) {
 }
 
 function readPostedItems(req, res, next) {
-    db.many("SELECT * FROM Item WHERE postUser='" + req.params.postUser + "'", req.params) //should not return values where item.claimuser = item.postuser (indicates a deleted item.)
+    db.many("SELECT Item.*, Users.name FROM Item, Users WHERE Users.id=postuser AND postUser='" + req.params.postUser + "'", req.params) //should not return values where item.claimuser = item.postuser (indicates a deleted item.)
         .then(data => {
             returnDataOr404(res, data);
         })
@@ -160,8 +160,8 @@ function readPostedItems(req, res, next) {
         })
 }
 
-function readClaimedItems(req, res, next) {
-    db.many("SELECT * FROM Item WHERE postUser='" + req.params.claimUser + "' AND archived=TRUE", req.params) //returns archived items, not claimed. will refactor later.
+function readArchivedItems(req, res, next) {
+    db.many("SELECT Item.*, Users.name FROM Item, Users WHERE Users.id=postuser AND postUser='" + req.params.postuser + "' AND archived=TRUE", req.params) //returns archived items, not claimed. will refactor later.
         .then(data => {
             returnDataOr404(res, data);
         })

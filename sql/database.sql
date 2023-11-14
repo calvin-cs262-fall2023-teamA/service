@@ -19,7 +19,7 @@ CREATE TABLE Users (
 
 CREATE TABLE Item (
 	ID SERIAL PRIMARY KEY,
-    name varchar(50),
+    title varchar(50), --changed from name to title so that it doesn't overlap with users (for join requests)
     description varchar(50),
     category varchar(50),
     location varchar(50),
