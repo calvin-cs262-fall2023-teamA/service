@@ -29,7 +29,7 @@ CREATE TABLE Item (
     postUser integer, --an id of a user. "owner/finder"
 	claimUser integer, --an id of a user. "owner/finder"
     archived BOOLEAN, --for removing listings from search results
-	itemImage varchar(50) --for storing directory path (to placeholders). temporary solution.
+	itemImage varchar(250) --for storing directory path. Might only work locally, so it is a temporary solution.
 	--image bytea, --should just be a uri that can be used in an expo image component. images should not be stored directly in this table. make a new table or reference a file.
     );
 
