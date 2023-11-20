@@ -16,8 +16,8 @@ CREATE TABLE Users (
 	name varchar(50),
     password varchar(50),
     type varchar(50),
-    profileImage varchar(250) -- not implemented yet
-	);
+    profileImage varchar(250) --works the same way as itemImage
+);
 
 CREATE TABLE Item (
 	ID SERIAL PRIMARY KEY,
@@ -33,7 +33,7 @@ CREATE TABLE Item (
     archived BOOLEAN, --for removing listings from search results
 	itemImage varchar(250) --for storing directory path. Might only work locally, so it is a temporary solution.
 	--image bytea, --should just be a uri that can be used in an expo image component. images should not be stored directly in this table. make a new table or reference a file.
-    );
+);
 
 CREATE TABLE Comment (
     userID SERIAL REFERENCES Users(ID),

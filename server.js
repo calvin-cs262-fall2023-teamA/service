@@ -126,7 +126,7 @@ function deleteUser(req, res, next) {
 }
 
 function readItems(req, res, next) {
-    db.many("SELECT Item.*, Users.name FROM Item, Users WHERE Users.id=postuser")
+    db.many("SELECT Item.*, Users.name, Users.profileimage FROM Item, Users WHERE Users.id=postuser ORDER BY Item.id ASC")
         .then(data => {
             returnDataOr404(res, data);
         })
@@ -136,7 +136,7 @@ function readItems(req, res, next) {
 }
 
 function searchItems(req, res, next) {
-    db.many("SELECT Item.*, Users.name FROM Item, Users WHERE Users.id=postuser AND title LIKE '%" + req.params.title + "%'", req.params)
+    db.many("SELECT Item.*, Users.name, Users.profileimage FROM Item, Users WHERE Users.id=postuser AND title LIKE '%" + req.params.title + "%' ORDER BY Item.id ASC", req.params)
         .then(data => {
             returnDataOr404(res, data);
         })
@@ -156,7 +156,7 @@ function createItems(req, res, next) {
 }
 
 function readPostedItems(req, res, next) {
-    db.many("SELECT Item.*, Users.name FROM Item, Users WHERE Users.id=postuser AND postUser='" + req.params.postUser + "'", req.params) //should not return values where item.claimuser = item.postuser (indicates a deleted item.)
+    db.many("SELECT Item.*, Users.name, Users.profileimage FROM Item, Users WHERE Users.id=postuser AND postUser='" + req.params.postUser + "' ORDER BY Item.id ASC", req.params) //should not return values where item.claimuser = item.postuser (indicates a deleted item.)
         .then(data => {
             returnDataOr404(res, data);
         })
@@ -166,7 +166,7 @@ function readPostedItems(req, res, next) {
 }
 
 function readArchivedItems(req, res, next) {
-    db.many("SELECT Item.*, Users.name FROM Item, Users WHERE Users.id=postuser AND postUser='" + req.params.postuser + "' AND archived=TRUE", req.params) //returns archived items, not claimed. will refactor later.
+    db.many("SELECT Item.*, Users.name, Users.profileimage FROM Item, Users WHERE Users.id=postuser AND postUser='" + req.params.postuser + "' AND archived=TRUE ORDER BY Item.id ASC", req.params) //returns archived items, not claimed. will refactor later.
         .then(data => {
             returnDataOr404(res, data);
         })
@@ -196,7 +196,7 @@ function readAllComments(req, res, next) {
 }
 
 function readComments(req, res, next) {
-    db.many('SELECT Comment.* FROM Comment WHERE itemID=${id}', req.params) // , Users.profileImage ... FROM , Users ... WHERE Users.id = userID
+    db.many('SELECT Comment.*, Users.name, Users.profileImage FROM Comment, Users WHERE userID = users.ID AND itemID=${id}', req.params) 
         .then(data => {
             returnDataOr404(res, data);
         })
