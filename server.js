@@ -38,6 +38,7 @@ router.post("/login", handleLogin)
 //profile page
 router.get("/items/post/:postUser", readPostedItems) //posted items
 router.get("/items/archived/:postuser", readArchivedItems) //claimed items
+router.post("/users/image", updateUserImage)
 
 //search
 router.get("/items/search/:title", searchItems) //search term in url
@@ -119,6 +120,16 @@ function deleteUser(req, res, next) {
     db.oneOrNone('DELETE FROM Users WHERE id=${id} RETURNING id', req.params)
         .then(data => {
             returnDataOr404(res, data);
+        })
+        .catch(err => {
+            next(err);
+        });
+}
+
+function updateUserImage(req, res, next) {
+    db.oneOrNone('UPDATE Users SET profileImage = ${image} WHERE id = ${id}', req.body)
+        .then(data => {
+            res.send(data);
         })
         .catch(err => {
             next(err);
