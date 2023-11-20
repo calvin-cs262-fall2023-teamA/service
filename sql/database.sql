@@ -3,6 +3,7 @@
 --
 
 -- Drop previous versions of the tables if they they exist, in reverse order of foreign keys.
+DROP TABLE IF EXISTS Comment;
 DROP TABLE IF EXISTS Users;
 DROP TABLE IF EXISTS Item;
 
@@ -14,7 +15,8 @@ CREATE TABLE Users (
 	emailAddress varchar(50) NOT NULL,
 	name varchar(50),
     password varchar(50),
-    type varchar(50)
+    type varchar(50),
+    profileImage varchar(250) -- not implemented yet
 	);
 
 CREATE TABLE Item (
@@ -29,15 +31,18 @@ CREATE TABLE Item (
     postUser integer, --an id of a user. "owner/finder"
 	claimUser integer, --an id of a user. "owner/finder"
     archived BOOLEAN, --for removing listings from search results
-	itemImage varchar(50) --for storing directory path (to placeholders). temporary solution.
+	itemImage varchar(250) --for storing directory path. Might only work locally, so it is a temporary solution.
 	--image bytea, --should just be a uri that can be used in an expo image component. images should not be stored directly in this table. make a new table or reference a file.
     );
 
-
-
-
+CREATE TABLE Comment (
+    userID SERIAL REFERENCES Users(ID),
+    itemID SERIAL REFERENCES Item(ID),
+    content varchar(50)
+);
 
 -- Allow users to select data from the tables.
+GRANT SELECT ON Comment TO PUBLIC;
 GRANT SELECT ON Users TO PUBLIC;
 GRANT SELECT ON Item TO PUBLIC;
 

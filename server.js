@@ -42,6 +42,11 @@ router.get("/items/archived/:postuser", readArchivedItems) //claimed items
 //search
 router.get("/items/search/:title", searchItems) //search term in url
 
+//comments
+router.get("/comments", readAllComments) 
+router.get("/comments/:id", readComments) //id = itemid
+router.post("/comments/post", postComment)
+
 app.use(router);
 app.listen(port, () => console.log(`Listening on port ${port}`));
 
@@ -172,6 +177,36 @@ function readArchivedItems(req, res, next) {
 
 function readItem(req, res, next) {
     db.oneOrNone('SELECT * FROM Item WHERE id=${id}', req.params)
+        .then(data => {
+            returnDataOr404(res, data);
+        })
+        .catch(err => {
+            next(err);
+        });
+}
+
+function readAllComments(req, res, next) {
+    db.many('SELECT * FROM Comment')
+        .then(data => {
+            returnDataOr404(res, data);
+        })
+        .catch(err => {
+            next(err);
+        });
+}
+
+function readComments(req, res, next) {
+    db.many('SELECT Comment.* FROM Comment WHERE itemID=${id}', req.params) // , Users.profileImage ... FROM , Users ... WHERE Users.id = userID
+        .then(data => {
+            returnDataOr404(res, data);
+        })
+        .catch(err => {
+            next(err);
+        });
+}
+
+function postComment(req, res, next) {
+    db.one('INSERT INTO Comment(userID, itemID, content) VALUES (${userID}, ${itemID}, ${content})', req.body)
         .then(data => {
             returnDataOr404(res, data);
         })
