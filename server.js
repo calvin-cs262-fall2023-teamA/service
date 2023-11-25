@@ -135,7 +135,7 @@ function updateUserImage(req, res, next) {
     .then((data) => {
       res.send(data);
     })
-    .catch(err => {
+    .catch((err) => {
       next(err);
     });
 }
@@ -205,7 +205,7 @@ function readAllComments(req, res, next) {
     .then((data) => {
       returnDataOr404(res, data);
     })
-    .catch(err => {
+    .catch((err) => {
       next(err);
     });
 }
@@ -215,7 +215,7 @@ function readComments(req, res, next) {
     .then((data) => {
       returnDataOr404(res, data);
     })
-    .catch(err => {
+    .catch((err) => {
       next(err);
     });
 }
@@ -225,7 +225,7 @@ function postComment(req, res, next) {
     .then((data) => {
       returnDataOr404(res, data);
     })
-    .catch(err => {
+    .catch((err) => {
       next(err);
     });
 }
