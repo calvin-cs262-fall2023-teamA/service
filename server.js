@@ -49,7 +49,7 @@ router.post('/users/image', updateUserImage);
 router.get('/items/search/:title', searchItems); // search term in url
 
 // comments
-router.get('/comments', readAllComments); 
+router.get('/comments', readAllComments);
 router.get('/comments/:id', readComments); // id = itemid
 router.post('/comments/post', postComment);
 
@@ -132,7 +132,7 @@ function deleteUser(req, res, next) {
 
 function updateUserImage(req, res, next) {
   db.oneOrNone('UPDATE Users SET profileImage = ${image} WHERE id = ${id}', req.body)
-    .then(data => {
+    .then((data) => {
       res.send(data);
     })
     .catch(err => {
@@ -202,7 +202,7 @@ function readItem(req, res, next) {
 
 function readAllComments(req, res, next) {
   db.many('SELECT * FROM Comment')
-    .then(data => {
+    .then((data) => {
       returnDataOr404(res, data);
     })
     .catch(err => {
@@ -211,8 +211,8 @@ function readAllComments(req, res, next) {
 }
 
 function readComments(req, res, next) {
-  db.many('SELECT Comment.*, Users.name, Users.profileImage FROM Comment, Users WHERE userID = users.ID AND itemID=${id}', req.params) 
-    .then(data => {
+  db.many('SELECT Comment.*, Users.name, Users.profileImage FROM Comment, Users WHERE userID = users.ID AND itemID=${id}', req.params)
+    .then((data) => {
       returnDataOr404(res, data);
     })
     .catch(err => {
@@ -222,7 +222,7 @@ function readComments(req, res, next) {
 
 function postComment(req, res, next) {
   db.one('INSERT INTO Comment(userID, itemID, content) VALUES (${userID}, ${itemID}, ${content})', req.body)
-    .then(data => {
+    .then((data) => {
       returnDataOr404(res, data);
     })
     .catch(err => {
