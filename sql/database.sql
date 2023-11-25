@@ -14,7 +14,7 @@ CREATE TABLE Users (
 	ID SERIAL PRIMARY KEY, 
 	emailAddress varchar(50) NOT NULL,
 	name varchar(50),
-    password varchar(50),
+    password varchar(100),
     type varchar(50),
     profileImage varchar(250) --works the same way as itemImage
 );
