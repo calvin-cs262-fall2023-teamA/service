@@ -6,6 +6,7 @@
 DROP TABLE IF EXISTS Comment;
 DROP TABLE IF EXISTS Users;
 DROP TABLE IF EXISTS Item;
+DROP TABLE IF EXISTS Image;
 
 -- Create the schema.
 
@@ -28,10 +29,10 @@ CREATE TABLE Item (
     lostFound varchar(50), -- Post is a Lost or Found Item
     --if both postUser and claimUser are filled (not null), it is "claimed" and should be removed from general search results
 	datePosted varchar(50), -- format MM/DD/YYYY
-    postUser integer, --an id of a user. "owner/finder"
-	claimUser integer, --an id of a user. "owner/finder"
-    archived BOOLEAN, --for removing listings from search results
-	itemImage varchar(250) --for storing directory path. Might only work locally, so it is a temporary solution.
+    postUser integer, -- an id of a user. "owner/finder"
+	claimUser integer, -- an id of a user. "owner/finder"
+    archived BOOLEAN, -- for removing listings from search results
+	itemImage text -- for storing binary data of an image
 	--image bytea, --should just be a uri that can be used in an expo image component. images should not be stored directly in this table. make a new table or reference a file.
 );
 
@@ -41,10 +42,17 @@ CREATE TABLE Comment (
     content varchar(50)
 );
 
+-- CREATE TABLE Image (
+--     referenceID SERIAL, -- references either user or item, depending on what the image is for
+--     imageType varchar(5), -- 'user' or 'item'
+--     image bytea -- binary image data
+-- );
+
 -- Allow users to select data from the tables.
 GRANT SELECT ON Comment TO PUBLIC;
 GRANT SELECT ON Users TO PUBLIC;
 GRANT SELECT ON Item TO PUBLIC;
+GRANT SELECT ON Image TO PUBLIC;
 
 -- Add sample records.
 -- The sample records are not manually added to the database as it has been implemented in the app.
