@@ -5,7 +5,6 @@
 /* eslint-disable no-template-curly-in-string */
 
 // Blob Storage Account Authentication
-// the eslint error should be fixed? It is listed in the package.json dependencies.
 // eslint-disable-next-line import/no-extraneous-dependencies
 const { BlobServiceClient } = require('@azure/storage-blob');
 // eslint-disable-next-line import/no-extraneous-dependencies
@@ -41,7 +40,7 @@ const express = require('express');
 const app = express();
 const port = process.env.PORT || 3000;
 const router = express.Router();
-router.use(express.json());
+router.use(express.json({ limit: '50mb' })); // lower this later
 
 router.get('/', readHelloMessage);
 
@@ -181,12 +180,8 @@ function searchItems(req, res, next) {
 }
 
 function createItems(req, res, next) {
-  // ideally returns path to storage account location. Just over 36 characters for the uuid itself,
-  // but this returns an entire object.
-  const blockBlobClient = '../../assets/DemoPlaceholders/demobottle.jpg';
-  // currently returns promise (is what is "printed" in db) when const blockBlobClient = get..()
-  // getBlobClient();
-  // uploadImage(blockBlobClient, req.body.imagedata);
+  const blockBlobClient = '../../assets/placeholder.jpg';
+  if (req.body.imagedata) uploadImage(req.body.imagedata); // if image isn't null, upload its data
   db.one('INSERT INTO Item (title, description, category, location, lostFound, datePosted, postUser, claimUser, archived, itemImage) VALUES (${title}, ${description}, ${category}, ${location}, ${lostFound}, ${datePosted}, ${postUser}, ${claimUser}, ${archived}, \'' + blockBlobClient + '\')', req.body)
     .then((data) => {
       res.send(data);
@@ -289,29 +284,30 @@ async function handleLogin(req, res) {
 
 /**
  * Creates a container and blob in the storage account
- * @returns an object that can be used to upload/download data
- * - Return is essentially a url to the blob data. It is a 36 character uuid + file extension (.txt)
+ * @param {*} data byte64 data that should be received from the client
+ * @returns an array containing values that refer to a blob in the storage account.
+ * - Return is the values needed to make a blockBlobClient for downloading.
  */
-// async function getBlobClient() {
-//   const containerName = uuidv1();
-//   // Get a reference to a container
-//   const containerClient = blobServiceClient.getContainerClient(containerName);
-//   // Create the container
-//   await containerClient.create();
+async function uploadImage(data) {
+  const containerName = uuidv1();
+  // Get a reference to a container
+  const containerClient = blobServiceClient.getContainerClient(containerName);
+  // Create the container
+  await containerClient.create();
 
-//   // Create a unique name for the blob
-//   const blobName = uuidv1() + '.txt';
+  // Create a unique name for the blob
+  const blobName = uuidv1() + '.txt';
 
-//   // Get a block blob client
-//   const blockBlobClient = containerClient.getBlockBlobClient(blobName);
-//   const data = 'test';
-//   await blockBlobClient.upload(data, data.length());
-//   // return blockBlobClient;
-// }
+  // Get a block blob client
+  const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+  await blockBlobClient.upload(data, data.length);
+  // return [containerName, blobName]; // the building blocks of a blockBlobClient.
+  // returning strings that can be easily put in a database.
+}
 
 // /**
 //  * Allows the user to upload an image into the storage account at a particular location.
-//  * @param {*} blockBlobClient The upload location/url. Use getBlobClient() to get a blockBlobClient.
+//  * @param {*} blockBlobClient The upload location/url.
 //  * @param {*} data byte64 data that should be received from the client
 //  */
 // async function uploadImage(blockBlobClient, data) {
