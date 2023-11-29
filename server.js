@@ -1,3 +1,4 @@
+/* eslint-disable no-plusplus */
 /* eslint-disable linebreak-style */
 /* eslint-disable no-use-before-define */
 /* eslint-disable prefer-destructuring */
@@ -19,6 +20,8 @@ const blobServiceClient = new BlobServiceClient(
   `https://${accountName}.blob.core.windows.net`,
   new DefaultAzureCredential(),
 );
+
+let downloadFlag = false;
 
 // Set up the database connection.
 
@@ -162,7 +165,16 @@ function updateUserImage(req, res, next) {
 function readItems(req, res, next) {
   db.many('SELECT Item.*, Users.name, Users.profileimage FROM Item, Users WHERE Users.id=postuser ORDER BY Item.id ASC')
     .then((data) => {
-      returnDataOr404(res, data);
+      const returnData = data; // work around eslint rule
+      for (let i = 0; i < returnData.length; i++) {
+        if (returnData[i].id === 48) { // TODO hardcoded for now
+          // change if to IF there is a container and blob name recorded.
+          // below, change to fields from returnData[i]
+          returnData[i].itemimage = downloadImage('placeholder', 'placeholder');
+        }
+      }
+      
+      returnDataOr404(res, returnData);
     })
     .catch((err) => {
       next(err);
@@ -305,28 +317,33 @@ async function uploadImage(data) {
   // returning strings that can be easily put in a database.
 }
 
-// /**
-//  * Allows the user to upload an image into the storage account at a particular location.
-//  * @param {*} blockBlobClient The upload location/url.
-//  * @param {*} data byte64 data that should be received from the client
-//  */
-// async function uploadImage(blockBlobClient, data) {
-//   try {
-//     await blockBlobClient.upload(data, data.length);
-//   } catch (error) {
-//     console.error(error);
-//   }
-// }
-
 /**
  * Allows the user to download an image from the storage account at a particular location.
  * @param {*} blockBlobClient the upload location/url. Should be the same one used in uploadImage.
  * @returns byte64 image data to be sent to the client
  */
-// async function downloadImage(blockBlobClient) {
-//   try {
-//     return blockBlobClient.download(0);
-//   } catch (error) {
-//     console.error(error);
-//   }
-// }
+async function downloadImage(containerName, blobName) {
+  try {
+    // constants for now to test for a particular image.
+    const containerClient = blobServiceClient.getContainerClient('3d084c70-8e61-11ee-9d07-792054ad2936');
+    const blockBlobClient = containerClient.getBlockBlobClient('3db52e40-8e61-11ee-9d07-792054ad2936.txt');
+    const downloadBlockBlobResponse = await blockBlobClient.download(0);
+    return await streamToText(downloadBlockBlobResponse.readableStreamBody);
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
+}
+
+// Convert stream to text
+// taken from storage account tutorial (https://learn.microsoft.com/en-us/azure/storage/blobs/storage-quickstart-blobs-nodejs?tabs=managed-identity%2Croles-azure-portal%2Csign-in-azure-cli)
+async function streamToText(readable) {
+  readable.setEncoding('utf8');
+  let data = '';
+  // disable for now.
+  // eslint-disable-next-line no-restricted-syntax
+  for await (const chunk of readable) {
+    data += chunk;
+  }
+  return data;
+}
