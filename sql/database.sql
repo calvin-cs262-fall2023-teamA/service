@@ -27,13 +27,13 @@ CREATE TABLE Item (
     category varchar(50),
     location varchar(50),
     lostFound varchar(50), -- Post is a Lost or Found Item
-    --if both postUser and claimUser are filled (not null), it is "claimed" and should be removed from general search results
 	datePosted varchar(50), -- format MM/DD/YYYY
     postUser integer, -- an id of a user. "owner/finder"
-	claimUser integer, -- an id of a user. "owner/finder"
+	claimUser integer, -- an id of a user. "owner/finder" CURRENTLY UNUSED but remains in db for future development.
     archived BOOLEAN, -- for removing listings from search results
-	itemImage text -- for storing binary data of an image
-	--image bytea, --should just be a uri that can be used in an expo image component. images should not be stored directly in this table. make a new table or reference a file.
+	itemImage text, -- for storing uri of image. should be removed later.
+    imageContainer varchar(36), -- a uuid, always 36 characters. Used to locate images in the storage account.
+    imageBlob varchar(36) -- a uuid, always 36 characters. Used to locate images in the storage account.
 );
 
 CREATE TABLE Comment (
@@ -41,12 +41,6 @@ CREATE TABLE Comment (
     itemID SERIAL REFERENCES Item(ID),
     content varchar(50)
 );
-
--- CREATE TABLE Image (
---     referenceID SERIAL, -- references either user or item, depending on what the image is for
---     imageType varchar(5), -- 'user' or 'item'
---     image bytea -- binary image data
--- );
 
 -- Allow users to select data from the tables.
 GRANT SELECT ON Comment TO PUBLIC;

@@ -1,9 +1,9 @@
-/* eslint-disable no-plusplus */
 /* eslint-disable linebreak-style */
 /* eslint-disable no-use-before-define */
 /* eslint-disable prefer-destructuring */
 /* eslint-disable prefer-template */
 /* eslint-disable no-template-curly-in-string */
+/* eslint-disable no-plusplus */
 
 // Blob Storage Account Authentication
 // eslint-disable-next-line import/no-extraneous-dependencies
@@ -20,8 +20,6 @@ const blobServiceClient = new BlobServiceClient(
   `https://${accountName}.blob.core.windows.net`,
   new DefaultAzureCredential(),
 );
-
-let downloadFlag = false;
 
 // Set up the database connection.
 
@@ -173,7 +171,6 @@ function readItems(req, res, next) {
           returnData[i].itemimage = downloadImage('placeholder', 'placeholder');
         }
       }
-      
       returnDataOr404(res, returnData);
     })
     .catch((err) => {
@@ -191,10 +188,12 @@ function searchItems(req, res, next) {
     });
 }
 
-function createItems(req, res, next) {
+async function createItems(req, res, next) {
   const blockBlobClient = '../../assets/placeholder.jpg';
-  if (req.body.imagedata) uploadImage(req.body.imagedata); // if image isn't null, upload its data
-  db.one('INSERT INTO Item (title, description, category, location, lostFound, datePosted, postUser, claimUser, archived, itemImage) VALUES (${title}, ${description}, ${category}, ${location}, ${lostFound}, ${datePosted}, ${postUser}, ${claimUser}, ${archived}, \'' + blockBlobClient + '\')', req.body)
+  // if image isn't null, upload its data
+  const imagePath = (req.body.imagedata) ? await uploadImage(req.body.imagedata) : [null, null];
+  // TODO: fix formatting of this query
+  db.one('INSERT INTO Item (title, description, category, location, lostFound, datePosted, postUser, claimUser, archived, itemImage, imageContainer, imageBlob) VALUES (${title}, ${description}, ${category}, ${location}, ${lostFound}, ${datePosted}, ${postUser}, ${claimUser}, ${archived}, \'' + blockBlobClient + '\', \'' + imagePath[0] + '\', \'' + imagePath[1] + '\')', req.body)
     .then((data) => {
       res.send(data);
     })
@@ -313,7 +312,7 @@ async function uploadImage(data) {
   // Get a block blob client
   const blockBlobClient = containerClient.getBlockBlobClient(blobName);
   await blockBlobClient.upload(data, data.length);
-  // return [containerName, blobName]; // the building blocks of a blockBlobClient.
+  return [containerName, blobName]; // the building blocks of a blockBlobClient.
   // returning strings that can be easily put in a database.
 }
 
