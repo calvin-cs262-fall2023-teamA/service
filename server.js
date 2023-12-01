@@ -160,15 +160,19 @@ function updateUserImage(req, res, next) {
     });
 }
 
-function readItems(req, res, next) {
+async function readItems(req, res, next) {
   db.many('SELECT Item.*, Users.name, Users.profileimage FROM Item, Users WHERE Users.id=postuser ORDER BY Item.id ASC')
-    .then((data) => {
+    .then(async (data) => {
       const returnData = data; // work around eslint rule
       for (let i = 0; i < returnData.length; i++) {
-        if (returnData[i].id === 48) { // TODO hardcoded for now
-          // change if to IF there is a container and blob name recorded.
-          // below, change to fields from returnData[i]
-          returnData[i].itemimage = downloadImage('placeholder', 'placeholder');
+        // TODO: currently a string 'null' b/c of how create query is written
+        if (returnData[i].imageblob !== 'null' && returnData[i].imageblob !== null) {
+          // await in loop: inefficient, but does need to be done for every item (that is loaded).
+          // eslint-disable-next-line no-await-in-loop
+          returnData[i].itemimage = await downloadImage(
+            returnData[i].imagecontainer,
+            returnData[i].imageblob,
+          );
         }
       }
       returnDataOr404(res, returnData);
@@ -312,6 +316,7 @@ async function uploadImage(data) {
   // Get a block blob client
   const blockBlobClient = containerClient.getBlockBlobClient(blobName);
   await blockBlobClient.upload(data, data.length);
+  console.log(`conatiner: ${containerName}, blob: ${blobName}\n`);
   return [containerName, blobName]; // the building blocks of a blockBlobClient.
   // returning strings that can be easily put in a database.
 }
@@ -324,8 +329,9 @@ async function uploadImage(data) {
 async function downloadImage(containerName, blobName) {
   try {
     // constants for now to test for a particular image.
-    const containerClient = blobServiceClient.getContainerClient('3d084c70-8e61-11ee-9d07-792054ad2936');
-    const blockBlobClient = containerClient.getBlockBlobClient('3db52e40-8e61-11ee-9d07-792054ad2936.txt');
+    console.log(`downloading from: ${containerName} and ${blobName}`);
+    const containerClient = blobServiceClient.getContainerClient(containerName);
+    const blockBlobClient = containerClient.getBlockBlobClient(blobName);
     const downloadBlockBlobResponse = await blockBlobClient.download(0);
     return await streamToText(downloadBlockBlobResponse.readableStreamBody);
   } catch (error) {
