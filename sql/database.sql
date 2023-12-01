@@ -57,3 +57,18 @@ GRANT SELECT ON Image TO PUBLIC;
 -- INSERT INTO Item(ID, name, description, category, location, status) VALUES (1, 'Bottle', 'A blue 700ml bottle.', 'personal item', 'north hall', 'not claimed');
 -- INSERT INTO Item VALUES (2, 'Socks', 'A calvin sock.', 'personal item', 'north hall', 'not claimed');
 -- INSERT INTO Item VALUES (3, 'Book', 'Advanced Networking Book', 'personal item', 'north hall', 'not claimed');
+
+-- sample "items"
+-- INSERT INTO Item (title, description, category, location, lostfound, datePosted, postUser, claimUser, archived, imageContainer, imageBlob) VALUES ('Charger', 'Laptop charger', 'electronics', 'Commons', 'found', '11/6/2023', 2, null, FALSE, 'demo', 'charger.txt');
+-- INSERT INTO Item (title, description, category, location, lostfound, datePosted, postUser, claimUser, archived, imageContainer, imageBlob) VALUES ('Water Bottle', 'A green waterbottle', 'items', 'N/A', 'lost', '11/7/2023', 8, 4, FALSE, 'demo', 'bottle.txt');
+-- INSERT INTO Item (title, description, category, location, lostfound, datePosted, postUser, claimUser, archived, imageContainer, imageBlob) VALUES ('Notebook', '', 'items', 'N/A', 'lost', '11/4/2023', 2, 5, TRUE, 'demo', 'notebook.txt');
+-- INSERT INTO Item (title, description, category, location, lostfound, datePosted, postUser, claimUser, archived, imageContainer, imageBlob) VALUES ('Sock', 'I lost it in Vanderlinden''s office', 'clothing', 'Science Building', 'lost', '11/3/2023', 5, null, FALSE, null, null);
+-- INSERT INTO Item (title, description, category, location, lostfound, datePosted, postUser, claimUser, archived, imageContainer, imageBlob) VALUES ('Textbook', 'Computer Organization and Architecture', 'books', 'North Hall', 'found', '11/3/2023', 2, null, FALSE, 'demo', 'texbook.txt');
+-- INSERT INTO Item (title, description, category, location, lostfound, datePosted, postUser, claimUser, archived, imageContainer, imageBlob) VALUES ('Umbrella', 'A black umbrella', 'items', 'North Hall', 'found', '11/4/2023', 2, 3, FALSE, 'demo', 'umbrella.txt');
+-- INSERT INTO Item (title, description, category, location, lostfound, datePosted, postUser, claimUser, archived, imageContainer, imageBlob) VALUES ('Hat', '', 'clothing', 'N/A', 'lost', '11/3/2023', 3, 4, FALSE, 'demo', 'hat.txt');
+-- INSERT INTO Item (title, description, category, location, lostfound, datePosted, postUser, claimUser, archived, imageContainer, imageBlob) VALUES ('Can', 'Description of can', 'items', 'N/A', 'found', '11/2/2023', 8, 4, FALSE, 'demo', 'can.txt');
+-- INSERT INTO Item (title, description, category, location, lostfound, datePosted, postUser, claimUser, archived, imageContainer, imageBlob) VALUES ('Phone', 'iPhone 13', 'clothing', 'N/A', 'lost', '11/5/2023', 2, null, TRUE, 'demo', 'phone.txt');
+-- INSERT INTO Item (title, description, category, location, lostfound, datePosted, postUser, claimUser, archived, imageContainer, imageBlob) VALUES ('Car Keys', 'Subaru Car Keys', 'keys', 'N/A', 'lost', '11/3/2023', 3, 4, FALSE, 'demo', 'keys.txt');
+-- INSERT INTO Item (title, description, category, location, lostfound, datePosted, postUser, claimUser, archived, imageContainer, imageBlob) VALUES ('Gloves', '', 'clothing', 'N/A', 'lost', '11/1/2023', 2, 5, FALSE, 'demo', 'gloves.txt');
+-- INSERT INTO Item (title, description, category, location, lostfound, datePosted, postUser, claimUser, archived, imageContainer, imageBlob) VALUES ('Water bottle', 'Test', 'items', 'Science Building',	'found', '11/10/2023', 2, null, FALSE, 'demo', 'demobottle.txt');
+

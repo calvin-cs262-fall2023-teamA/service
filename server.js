@@ -167,7 +167,8 @@ async function readItems(req, res, next) {
       for (let i = 0; i < returnData.length; i++) {
         // TODO: currently a string 'null' b/c of how create query is written
         if (returnData[i].imageblob !== 'null' && returnData[i].imageblob !== null) {
-          // await in loop: inefficient, but does need to be done for every item (that is loaded).
+          /* await in loop: inefficient, but does need to be
+           done for every item (that has an image loaded). */
           // eslint-disable-next-line no-await-in-loop
           returnData[i].itemimage = await downloadImage(
             returnData[i].imagecontainer,
@@ -184,7 +185,20 @@ async function readItems(req, res, next) {
 
 function searchItems(req, res, next) {
   db.many("SELECT Item.*, Users.name, Users.profileimage FROM Item, Users WHERE Users.id=postuser AND title LIKE '%" + req.params.title + "%' ORDER BY Item.id ASC", req.params)
-    .then((data) => {
+    .then(async (data) => {
+      const returnData = data; // work around eslint rule
+      for (let i = 0; i < returnData.length; i++) {
+        // TODO: currently a string 'null' b/c of how create query is written
+        if (returnData[i].imageblob !== 'null' && returnData[i].imageblob !== null) {
+          /* await in loop: inefficient, but does need to be
+           done for every item (that has an image loaded). */
+          // eslint-disable-next-line no-await-in-loop
+          returnData[i].itemimage = await downloadImage(
+            returnData[i].imagecontainer,
+            returnData[i].imageblob,
+          );
+        }
+      }
       returnDataOr404(res, data);
     })
     .catch((err) => {
@@ -208,7 +222,20 @@ async function createItems(req, res, next) {
 
 function readPostedItems(req, res, next) {
   db.many("SELECT Item.*, Users.name, Users.profileimage FROM Item, Users WHERE Users.id=postuser AND postUser='" + req.params.postUser + "' ORDER BY Item.id ASC", req.params) // should not return values where item.claimuser = item.postuser (indicates a deleted item.)
-    .then((data) => {
+    .then(async (data) => {
+      const returnData = data; // work around eslint rule
+      for (let i = 0; i < returnData.length; i++) {
+        // TODO: currently a string 'null' b/c of how create query is written
+        if (returnData[i].imageblob !== 'null' && returnData[i].imageblob !== null) {
+          /* await in loop: inefficient, but does need to be
+           done for every item (that has an image loaded). */
+          // eslint-disable-next-line no-await-in-loop
+          returnData[i].itemimage = await downloadImage(
+            returnData[i].imagecontainer,
+            returnData[i].imageblob,
+          );
+        }
+      }
       returnDataOr404(res, data);
     })
     .catch((err) => {
@@ -218,7 +245,20 @@ function readPostedItems(req, res, next) {
 
 function readArchivedItems(req, res, next) {
   db.many("SELECT Item.*, Users.name, Users.profileimage FROM Item, Users WHERE Users.id=postuser AND postUser='" + req.params.postuser + "' AND archived=TRUE ORDER BY Item.id ASC", req.params) // returns archived items, not claimed. will refactor later.
-    .then((data) => {
+    .then(async (data) => {
+      const returnData = data; // work around eslint rule
+      for (let i = 0; i < returnData.length; i++) {
+        // TODO: currently a string 'null' b/c of how create query is written
+        if (returnData[i].imageblob !== 'null' && returnData[i].imageblob !== null) {
+          /* await in loop: inefficient, but does need to be
+           done for every item (that has an image loaded). */
+          // eslint-disable-next-line no-await-in-loop
+          returnData[i].itemimage = await downloadImage(
+            returnData[i].imagecontainer,
+            returnData[i].imageblob,
+          );
+        }
+      }
       returnDataOr404(res, data);
     })
     .catch((err) => {
@@ -316,7 +356,6 @@ async function uploadImage(data) {
   // Get a block blob client
   const blockBlobClient = containerClient.getBlockBlobClient(blobName);
   await blockBlobClient.upload(data, data.length);
-  console.log(`conatiner: ${containerName}, blob: ${blobName}\n`);
   return [containerName, blobName]; // the building blocks of a blockBlobClient.
   // returning strings that can be easily put in a database.
 }
@@ -328,8 +367,6 @@ async function uploadImage(data) {
  */
 async function downloadImage(containerName, blobName) {
   try {
-    // constants for now to test for a particular image.
-    console.log(`downloading from: ${containerName} and ${blobName}`);
     const containerClient = blobServiceClient.getContainerClient(containerName);
     const blockBlobClient = containerClient.getBlockBlobClient(blobName);
     const downloadBlockBlobResponse = await blockBlobClient.download(0);
