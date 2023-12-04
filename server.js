@@ -63,7 +63,7 @@ router.post('/login', handleLogin);
 // profile page
 router.get('/items/post/:postUser', readPostedItems); // posted items
 router.get('/items/archived/:postuser', readArchivedItems); // claimed items
-router.post('/users/image', updateUserImage);
+router.put('/users/image', updateUserImage);
 
 // search
 router.get('/items/search/:title', searchItems); // search term in url
@@ -151,7 +151,26 @@ function deleteUser(req, res, next) {
 }
 
 function updateUserImage(req, res, next) {
+  /* upload new image data. If there is already an image for this user,
+   write the new image blob data to the same location.
+   (Azure takes and overwrites the old data with the new data being saved to the same location) */
+
+  /* only run this if the user has a new image. If they are overwriting an old image,
+   the location in the storage account is the same (and no database info needs to be updated). */
   db.oneOrNone('UPDATE Users SET profileImage = ${image} WHERE id = ${id}', req.body)
+    .then((data) => {
+      res.send(data);
+    })
+    .catch((err) => {
+      next(err);
+    });
+}
+
+async function createItems(req, res, next) {
+  // if image isn't null, upload its data
+  const imagePath = (req.body.imagedata) ? await uploadImage(req.body.imagedata) : [null, null];
+  // TODO: fix formatting of this query
+  db.one('INSERT INTO Item (title, description, category, location, lostFound, datePosted, postUser, claimUser, archived, itemImage, imageContainer, imageBlob) VALUES (${title}, ${description}, ${category}, ${location}, ${lostFound}, ${datePosted}, ${postUser}, ${claimUser}, ${archived}, \'../../assets/placeholder.jpg\', \'' + imagePath[0] + '\', \'' + imagePath[1] + '\')', req.body)
     .then((data) => {
       res.send(data);
     })
@@ -200,20 +219,6 @@ function searchItems(req, res, next) {
         }
       }
       returnDataOr404(res, data);
-    })
-    .catch((err) => {
-      next(err);
-    });
-}
-
-async function createItems(req, res, next) {
-  const blockBlobClient = '../../assets/placeholder.jpg';
-  // if image isn't null, upload its data
-  const imagePath = (req.body.imagedata) ? await uploadImage(req.body.imagedata) : [null, null];
-  // TODO: fix formatting of this query
-  db.one('INSERT INTO Item (title, description, category, location, lostFound, datePosted, postUser, claimUser, archived, itemImage, imageContainer, imageBlob) VALUES (${title}, ${description}, ${category}, ${location}, ${lostFound}, ${datePosted}, ${postUser}, ${claimUser}, ${archived}, \'' + blockBlobClient + '\', \'' + imagePath[0] + '\', \'' + imagePath[1] + '\')', req.body)
-    .then((data) => {
-      res.send(data);
     })
     .catch((err) => {
       next(err);
