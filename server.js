@@ -1,7 +1,26 @@
+/* eslint-disable linebreak-style */
 /* eslint-disable no-use-before-define */
 /* eslint-disable prefer-destructuring */
 /* eslint-disable prefer-template */
 /* eslint-disable no-template-curly-in-string */
+/* eslint-disable no-plusplus */
+
+// Blob Storage Account Authentication
+// eslint-disable-next-line import/no-extraneous-dependencies
+const { BlobServiceClient } = require('@azure/storage-blob');
+// eslint-disable-next-line import/no-extraneous-dependencies
+const { DefaultAzureCredential } = require('@azure/identity');
+// eslint-disable-next-line import/no-extraneous-dependencies
+const { v1: uuidv1 } = require('uuid');
+
+const accountName = process.env.AZURE_STORAGE_ACCOUNT_NAME;
+if (!accountName) throw Error('Azure Storage accountName not found');
+
+const blobServiceClient = new BlobServiceClient(
+  `https://${accountName}.blob.core.windows.net`,
+  new DefaultAzureCredential(),
+);
+
 // Set up the database connection.
 
 const pgp = require('pg-promise')();
@@ -16,12 +35,13 @@ const db = pgp({
 
 // Configure the server and its routes.
 
+// eslint-disable-next-line import/first, import/order
 const express = require('express');
 
 const app = express();
 const port = process.env.PORT || 3000;
 const router = express.Router();
-router.use(express.json());
+router.use(express.json({ limit: '50mb' })); // lower this later
 
 router.get('/', readHelloMessage);
 
@@ -140,10 +160,23 @@ function updateUserImage(req, res, next) {
     });
 }
 
-function readItems(req, res, next) {
+async function readItems(req, res, next) {
   db.many('SELECT Item.*, Users.name, Users.profileimage, Users.emailaddress FROM Item, Users WHERE Users.id=postuser ORDER BY Item.id ASC')
-    .then((data) => {
-      returnDataOr404(res, data);
+    .then(async (data) => {
+      const returnData = data; // work around eslint rule
+      for (let i = 0; i < returnData.length; i++) {
+        // TODO: currently a string 'null' b/c of how create query is written
+        if (returnData[i].imageblob !== 'null' && returnData[i].imageblob !== null) {
+          /* await in loop: inefficient, but does need to be
+           done for every item (that has an image loaded). */
+          // eslint-disable-next-line no-await-in-loop
+          returnData[i].itemimage = await downloadImage(
+            returnData[i].imagecontainer,
+            returnData[i].imageblob,
+          );
+        }
+      }
+      returnDataOr404(res, returnData);
     })
     .catch((err) => {
       next(err);
@@ -152,7 +185,20 @@ function readItems(req, res, next) {
 
 function searchItems(req, res, next) {
   db.many("SELECT Item.*, Users.name, Users.profileimage, Users.emailaddress FROM Item, Users WHERE Users.id=postuser AND title LIKE '%" + req.params.title + "%' ORDER BY Item.id ASC", req.params)
-    .then((data) => {
+    .then(async (data) => {
+      const returnData = data; // work around eslint rule
+      for (let i = 0; i < returnData.length; i++) {
+        // TODO: currently a string 'null' b/c of how create query is written
+        if (returnData[i].imageblob !== 'null' && returnData[i].imageblob !== null) {
+          /* await in loop: inefficient, but does need to be
+           done for every item (that has an image loaded). */
+          // eslint-disable-next-line no-await-in-loop
+          returnData[i].itemimage = await downloadImage(
+            returnData[i].imagecontainer,
+            returnData[i].imageblob,
+          );
+        }
+      }
       returnDataOr404(res, data);
     })
     .catch((err) => {
@@ -160,8 +206,12 @@ function searchItems(req, res, next) {
     });
 }
 
-function createItems(req, res, next) {
-  db.one('INSERT INTO Item (title, description, category, location, lostFound, datePosted, postUser, claimUser, archived, itemImage) VALUES (${title}, ${description}, ${category}, ${location}, ${lostFound}, ${datePosted}, ${postUser}, ${claimUser}, ${archived}, ${itemImage})', req.body) // add image later as well
+async function createItems(req, res, next) {
+  const blockBlobClient = '../../assets/placeholder.jpg';
+  // if image isn't null, upload its data
+  const imagePath = (req.body.imagedata) ? await uploadImage(req.body.imagedata) : [null, null];
+  // TODO: fix formatting of this query
+  db.one('INSERT INTO Item (title, description, category, location, lostFound, datePosted, postUser, claimUser, archived, itemImage, imageContainer, imageBlob) VALUES (${title}, ${description}, ${category}, ${location}, ${lostFound}, ${datePosted}, ${postUser}, ${claimUser}, ${archived}, \'' + blockBlobClient + '\', \'' + imagePath[0] + '\', \'' + imagePath[1] + '\')', req.body)
     .then((data) => {
       res.send(data);
     })
@@ -172,7 +222,20 @@ function createItems(req, res, next) {
 
 function readPostedItems(req, res, next) {
   db.many("SELECT Item.*, Users.name, Users.profileimage, Users.emailaddress FROM Item, Users WHERE Users.id=postuser AND postUser='" + req.params.postUser + "' ORDER BY Item.id ASC", req.params) // should not return values where item.claimuser = item.postuser (indicates a deleted item.)
-    .then((data) => {
+    .then(async (data) => {
+      const returnData = data; // work around eslint rule
+      for (let i = 0; i < returnData.length; i++) {
+        // TODO: currently a string 'null' b/c of how create query is written
+        if (returnData[i].imageblob !== 'null' && returnData[i].imageblob !== null) {
+          /* await in loop: inefficient, but does need to be
+           done for every item (that has an image loaded). */
+          // eslint-disable-next-line no-await-in-loop
+          returnData[i].itemimage = await downloadImage(
+            returnData[i].imagecontainer,
+            returnData[i].imageblob,
+          );
+        }
+      }
       returnDataOr404(res, data);
     })
     .catch((err) => {
@@ -182,7 +245,20 @@ function readPostedItems(req, res, next) {
 
 function readArchivedItems(req, res, next) {
   db.many("SELECT Item.*, Users.name, Users.profileimage, Users.emailaddress FROM Item, Users WHERE Users.id=postuser AND postUser='" + req.params.postuser + "' AND archived=TRUE ORDER BY Item.id ASC", req.params) // returns archived items, not claimed. will refactor later.
-    .then((data) => {
+    .then(async (data) => {
+      const returnData = data; // work around eslint rule
+      for (let i = 0; i < returnData.length; i++) {
+        // TODO: currently a string 'null' b/c of how create query is written
+        if (returnData[i].imageblob !== 'null' && returnData[i].imageblob !== null) {
+          /* await in loop: inefficient, but does need to be
+           done for every item (that has an image loaded). */
+          // eslint-disable-next-line no-await-in-loop
+          returnData[i].itemimage = await downloadImage(
+            returnData[i].imagecontainer,
+            returnData[i].imageblob,
+          );
+        }
+      }
       returnDataOr404(res, data);
     })
     .catch((err) => {
@@ -255,4 +331,61 @@ async function handleLogin(req, res) {
     console.error(error);
     return res.status(500).json({ message: 'An error occurred during login' });
   }
+}
+
+// Interact with storage account
+/* a large amount of the code for the storage account interaction is taken from a tutorial,
+  https://learn.microsoft.com/en-us/azure/storage/blobs/storage-quickstart-blobs-nodejs */
+
+/**
+ * Creates a container and blob in the storage account
+ * @param {*} data byte64 data that should be received from the client
+ * @returns an array containing values that refer to a blob in the storage account.
+ * - Return is the values needed to make a blockBlobClient for downloading.
+ */
+async function uploadImage(data) {
+  const containerName = uuidv1();
+  // Get a reference to a container
+  const containerClient = blobServiceClient.getContainerClient(containerName);
+  // Create the container
+  await containerClient.create();
+
+  // Create a unique name for the blob
+  const blobName = uuidv1() + '.txt';
+
+  // Get a block blob client
+  const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+  await blockBlobClient.upload(data, data.length);
+  return [containerName, blobName]; // the building blocks of a blockBlobClient.
+  // returning strings that can be easily put in a database.
+}
+
+/**
+ * Allows the user to download an image from the storage account at a particular location.
+ * @param {*} blockBlobClient the upload location/url. Should be the same one used in uploadImage.
+ * @returns byte64 image data to be sent to the client
+ */
+async function downloadImage(containerName, blobName) {
+  try {
+    const containerClient = blobServiceClient.getContainerClient(containerName);
+    const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+    const downloadBlockBlobResponse = await blockBlobClient.download(0);
+    return await streamToText(downloadBlockBlobResponse.readableStreamBody);
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
+}
+
+// Convert stream to text
+// taken from storage account tutorial (https://learn.microsoft.com/en-us/azure/storage/blobs/storage-quickstart-blobs-nodejs?tabs=managed-identity%2Croles-azure-portal%2Csign-in-azure-cli)
+async function streamToText(readable) {
+  readable.setEncoding('utf8');
+  let data = '';
+  // disable for now.
+  // eslint-disable-next-line no-restricted-syntax
+  for await (const chunk of readable) {
+    data += chunk;
+  }
+  return data;
 }
