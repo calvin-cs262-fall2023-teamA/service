@@ -63,7 +63,7 @@ router.post('/login', handleLogin);
 // profile page
 router.get('/items/post/:postUser', readPostedItems); // posted items
 router.get('/items/archived/:postuser', readArchivedItems); // claimed items
-router.put('/users/image', updateUserImage);
+router.post('/users/image', updateUserImage); // put wasn't working
 
 // search
 router.get('/items/search/:title', searchItems); // search term in url
@@ -150,14 +150,18 @@ function deleteUser(req, res, next) {
     });
 }
 
-function updateUserImage(req, res, next) {
+async function updateUserImage(req, res, next) {
+  // body includes userID and image data (uri)
   /* upload new image data. If there is already an image for this user,
    write the new image blob data to the same location.
    (Azure takes and overwrites the old data with the new data being saved to the same location) */
+  const imagePath = (req.body.imagedata) ? await uploadImage(req.body.imagedata) : [null, null];
 
-  /* only run this if the user has a new image. If they are overwriting an old image,
-   the location in the storage account is the same (and no database info needs to be updated). */
-  db.oneOrNone('UPDATE Users SET profileImage = ${image} WHERE id = ${id}', req.body)
+  /* IDEALLY, only run this if the user has a new image. If they are overwriting an old image,
+   the location in the storage account is the same (and no database info needs to be updated).
+   This would require either another request to the db (get)
+   or local storage of the imagecontainer/blob to check and upload using the same path as before */
+  db.oneOrNone('UPDATE Users SET imagecontainer = \'' + imagePath[0] + '\', imageblob = \'' + imagePath[1] + '\' WHERE id = ${id}', req.body)
     .then((data) => {
       res.send(data);
     })

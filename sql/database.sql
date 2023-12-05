@@ -14,9 +14,9 @@ CREATE TABLE Users (
 	ID SERIAL PRIMARY KEY, 
 	emailAddress varchar(50) NOT NULL,
 	name varchar(50),
-    password varchar(50),
+    password varchar(60), --"...the length of generated hashes is 60 characters." (https://www.npmjs.com/package/react-native-bcrypt)
     type varchar(50),
-    profileImage varchar(250) -- for storing uri of image. replaced by imageContainer/Blob, (currently) kept for support of old code
+    profileImage varchar(250), -- for storing uri of image. replaced by imageContainer/Blob, (currently) kept for support of old code
     imageContainer varchar(36), -- a uuid, always 36 characters. Used to locate images in the storage account.
     imageBlob varchar(40) -- a uuid, always 36 characters. Used to locate images in the storage account. Extra space for file extensions (.txt).
 );
