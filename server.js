@@ -66,7 +66,7 @@ router.get('/items/archived/:postuser', readArchivedItems); // claimed items
 router.post('/users/image', updateUserImage);
 
 // search
-router.get('/items/search/:title', searchItems); // search term in url
+router.get('/items/search/:text', searchItems); // search term in url
 
 // comments
 router.get('/comments', readAllComments);
@@ -184,7 +184,25 @@ async function readItems(req, res, next) {
 }
 
 function searchItems(req, res, next) {
-  db.many("SELECT Item.*, Users.name, Users.profileimage, Users.emailaddress FROM Item, Users WHERE Users.id=postuser AND title LIKE '%" + req.params.title + "%' ORDER BY Item.id ASC", req.params)
+  const MINIMUMWORDLENGTH = 4; // minimum length of words included as search terms in the sql query
+  let searchString = '';
+  const searchArray = (req.params.text).split(' ');
+  for (let i = 0; i < searchArray.length; i++) {
+    // if only one search term, search regardless of length
+    if (searchArray[i].length >= MINIMUMWORDLENGTH || searchArray.length === 1) {
+      // if it is a significant word, add it to the search terms.
+      searchString += "LOWER(title) LIKE LOWER('%" + searchArray[i] + "%') OR LOWER(description) LIKE LOWER('%" + searchArray[i] + "%') OR LOWER(location) LIKE LOWER('%" + searchArray[i] + "%')";
+      if (i !== searchArray.length - 1) {
+        // if the last word is <= 3 characters, will cause an error.
+        searchString += ' OR ';
+      }
+    }
+  }
+  if (searchArray[searchArray.length - 1].length < MINIMUMWORDLENGTH && searchArray.length > 1) {
+    // if the last word is <= 3 characters, will cause an error.
+    searchString = searchString.slice(0, -3); // remove OR to fix the error
+  }
+  db.many('SELECT Item.*, Users.name, Users.profileimage, Users.emailaddress FROM Item, Users WHERE Users.id=postuser AND (' + searchString + ') ORDER BY Item.id ASC')
     .then(async (data) => {
       const returnData = data; // work around eslint rule
       for (let i = 0; i < returnData.length; i++) {
