@@ -56,6 +56,7 @@ router.get('/users/email/:email', readUserFromEmail);
 router.get('/items', readItems);
 router.get('/items/:id', readItem);
 router.post('/items', createItems);
+router.post('/items/archive/:id', archiveItem);
 
 // login functions
 router.post('/login', handleLogin);
@@ -161,7 +162,7 @@ function updateUserImage(req, res, next) {
 }
 
 async function readItems(req, res, next) {
-  db.many('SELECT Item.*, Users.name, Users.profileimage, Users.emailaddress FROM Item, Users WHERE Users.id=postuser ORDER BY Item.id ASC')
+  db.many('SELECT Item.*, Users.name, Users.profileimage, Users.emailaddress FROM Item, Users WHERE Users.id=postuser AND archived=FALSE ORDER BY Item.id ASC')
     .then(async (data) => {
       const returnData = data; // work around eslint rule
       for (let i = 0; i < returnData.length; i++) {
@@ -202,7 +203,7 @@ function searchItems(req, res, next) {
     // if the last word is <= 3 characters, will cause an error.
     searchString = searchString.slice(0, -3); // remove OR to fix the error
   }
-  db.many('SELECT Item.*, Users.name, Users.profileimage, Users.emailaddress FROM Item, Users WHERE Users.id=postuser AND (' + searchString + ') ORDER BY Item.id ASC')
+  db.many('SELECT Item.*, Users.name, Users.profileimage, Users.emailaddress FROM Item, Users WHERE Users.id=postuser AND (' + searchString + ') AND archived=FALSE ORDER BY Item.id ASC')
     .then(async (data) => {
       const returnData = data; // work around eslint rule
       for (let i = 0; i < returnData.length; i++) {
@@ -239,7 +240,7 @@ async function createItems(req, res, next) {
 }
 
 function readPostedItems(req, res, next) {
-  db.many("SELECT Item.*, Users.name, Users.profileimage, Users.emailaddress FROM Item, Users WHERE Users.id=postuser AND postUser='" + req.params.postUser + "' ORDER BY Item.id ASC", req.params) // should not return values where item.claimuser = item.postuser (indicates a deleted item.)
+  db.many("SELECT Item.*, Users.name, Users.profileimage, Users.emailaddress FROM Item, Users WHERE Users.id=postuser AND postUser='" + req.params.postUser + "' AND archived=FALSE ORDER BY Item.id ASC", req.params) // should not return values where item.claimuser = item.postuser (indicates a deleted item.)
     .then(async (data) => {
       const returnData = data; // work around eslint rule
       for (let i = 0; i < returnData.length; i++) {
@@ -286,6 +287,16 @@ function readArchivedItems(req, res, next) {
 
 function readItem(req, res, next) {
   db.oneOrNone('SELECT * FROM Item WHERE id=${id}', req.params)
+    .then((data) => {
+      returnDataOr404(res, data);
+    })
+    .catch((err) => {
+      next(err);
+    });
+}
+
+function archiveItem(req, res, next) {
+  db.none('UPDATE Item SET archived = true WHERE id=${id}', req.params)
     .then((data) => {
       returnDataOr404(res, data);
     })
