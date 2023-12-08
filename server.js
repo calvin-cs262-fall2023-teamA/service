@@ -208,13 +208,13 @@ function searchItems(req, res, next) {
       // if it is a significant word, add it to the search terms.
       searchString += "LOWER(title) LIKE LOWER('%" + searchArray[i] + "%') OR LOWER(description) LIKE LOWER('%" + searchArray[i] + "%') OR LOWER(location) LIKE LOWER('%" + searchArray[i] + "%')";
       if (i !== searchArray.length - 1) {
-        // if the last word is <= 3 characters, will cause an error.
+        // if the last word is < MINIMUMWORDLENGTH characters, will cause an error.
         searchString += ' OR ';
       }
     }
   }
   if (searchArray[searchArray.length - 1].length < MINIMUMWORDLENGTH && searchArray.length > 1) {
-    // if the last word is <= 3 characters, will cause an error.
+    // if the last word is < MINIMUMWORDLENGTH characters, will cause an error.
     searchString = searchString.slice(0, -3); // remove OR to fix the error
   }
   const filter = req.params.filter === 'Found' ? " AND lostfound = 'Found'" : "AND lostfound = 'Lost'";
