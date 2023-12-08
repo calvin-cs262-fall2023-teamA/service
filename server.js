@@ -3,6 +3,27 @@
 /* eslint-disable prefer-template */
 /* eslint-disable no-template-curly-in-string */
 // Set up the database connection.
+/**
+ * This module implements a REST-inspired webservice for the CalvinFinds DB.
+ * The database is hosted on ElephantSQL.
+ *
+ * To guard against SQL injection attacks, this code uses pg-promise's built-in
+ * variable escaping. This prevents a client from issuing this URL:
+ *     https://calvinfinds.azurewebsites.net//comments/1%3BDELETE%20FROM%20Comment
+ * which would delete records in the PlayerGame and then the Player tables.
+ * In particular, we don't use JS template strings because it doesn't filter
+ * client-supplied values properly.
+ * TODO: Consider using Prepared Statements.
+ *      https://vitaly-t.github.io/pg-promise/PreparedStatement.html
+ *
+ * This service assumes that the database connection strings and the server mode are
+ * set in environment variables. See the DB_* variables used by pg-promise. And
+ * setting NODE_ENV to production will cause ExpressJS to serve up uninformative
+ * server error responses for all errors.
+ *
+ * @author: CalvinFinds Team
+ * @date: Fall, 2023
+ */
 
 const pgp = require('pg-promise')();
 
@@ -32,6 +53,7 @@ router.put('/users/:id', updateUser);
 router.post('/users', createUser);
 router.delete('/users/:id', deleteUser);
 router.get('/users/email/:email', readUserFromEmail);
+
 // item functions
 router.get('/items', readItems);
 router.get('/items/:id', readItem);
