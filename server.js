@@ -3,6 +3,7 @@
 /* eslint-disable prefer-template */
 /* eslint-disable no-template-curly-in-string */
 // Set up the database connection.
+
 /**
  * This module implements a REST-inspired webservice for the CalvinFinds DB.
  * The database is hosted on ElephantSQL.
