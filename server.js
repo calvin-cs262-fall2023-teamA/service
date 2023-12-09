@@ -53,7 +53,7 @@ router.post('/users', createUser);
 router.delete('/users/:id', deleteUser);
 router.get('/users/email/:email', readUserFromEmail);
 // item functions
-router.get('/items', readItems);
+router.get('/items/:filter', readItems);
 router.get('/items/:id', readItem);
 router.post('/items', createItems);
 router.post('/items/archive/:id', archiveItem);
@@ -164,7 +164,8 @@ function updateUserImage(req, res, next) {
 }
 
 async function readItems(req, res, next) {
-  db.many('SELECT Item.*, Users.name, Users.profileimage, Users.emailaddress FROM Item, Users WHERE Users.id=postuser AND archived=FALSE ORDER BY Item.id ASC')
+  const filter = req.params.filter === 'Found' ? " AND lostfound = 'found'" : " AND lostfound = 'lost'";
+  db.many('SELECT Item.*, Users.name, Users.profileimage, Users.emailaddress FROM Item, Users WHERE Users.id=postuser' + filter + ' AND archived=FALSE ORDER BY Item.id ASC')
     .then(async (data) => {
       const returnData = data; // work around eslint rule
       for (let i = 0; i < returnData.length; i++) {
