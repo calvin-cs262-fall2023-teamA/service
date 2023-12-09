@@ -217,14 +217,15 @@ function searchItems(req, res, next) {
     // if the last word is < MINIMUMWORDLENGTH characters, will cause an error.
     searchString = searchString.slice(0, -3); // remove OR to fix the error
   }
-  const filter = req.params.filter === 'Found' ? " AND lostfound = 'Found'" : "AND lostfound = 'Lost'";
+  const filter = req.params.filter === 'Found' ? " AND lostfound = 'found'" : " AND lostfound = 'lost'";
   let searchRoute = ' AND archived=FALSE'; // default, searching through all items
   if (req.params.route === 'post') {
     searchRoute = " AND postUser='" + req.params.postUser + "' AND archived=FALSE";
   } else if (req.params.route === 'archive') {
     searchRoute = " AND postUser='" + req.params.postuser + "' AND archived=TRUE";
   }
-
+  console.log(`params: ${req.params.filter}, ${req.params.postUser}, ${req.params.route}\n`);
+  console.log('SELECT Item.*, Users.name, Users.profileimage, Users.emailaddress FROM Item, Users WHERE Users.id=postuser AND (' + searchString + ')' + filter + searchRoute + ' ORDER BY Item.id ASC');
   db.many('SELECT Item.*, Users.name, Users.profileimage, Users.emailaddress FROM Item, Users WHERE Users.id=postuser AND (' + searchString + ')' + filter + searchRoute + ' ORDER BY Item.id ASC')
     .then(async (data) => {
       const returnData = data; // work around eslint rule
