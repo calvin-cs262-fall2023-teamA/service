@@ -220,9 +220,11 @@ function searchItems(req, res, next) {
   let searchRoute = ' AND archived=FALSE'; // default, searching through all items
   if (req.params.route === 'post') {
     searchRoute = " AND postUser='" + req.params.postUser + "' AND archived=FALSE";
-  } else if (req.params.route === 'archive') {
+  } else if (req.params.route === 'archived') {
     searchRoute = " AND postUser='" + req.params.postuser + "' AND archived=TRUE";
   }
+  console.log(`params: ${req.params.postUser}, ${req.params.route}`);
+  console.log('SELECT Item.*, Users.name, Users.profileimage, Users.emailaddress FROM Item, Users WHERE Users.id=postuser AND (' + searchString + ')' + searchRoute + ' ORDER BY Item.id ASC');
   db.many('SELECT Item.*, Users.name, Users.profileimage, Users.emailaddress FROM Item, Users WHERE Users.id=postuser AND (' + searchString + ')' + searchRoute + ' ORDER BY Item.id ASC')
     .then(async (data) => {
       const returnData = data; // work around eslint rule
