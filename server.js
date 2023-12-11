@@ -90,7 +90,9 @@ router.get('/items/archived/:postuser', readArchivedItems); // claimed items
 router.post('/users/image', updateUserImage);
 
 // search
-router.get('/items/search/:text', searchItems); // search term in url
+/* search term in url (text), lost/found filter (filter), the logged in user (for posted/archived)
+and whether the search should be for all items, posted items, or archived items */
+router.get('/items/search/:text/:postUser/:route', searchItems);
 
 // comments
 router.get('/comments', readAllComments);
@@ -207,6 +209,18 @@ async function readItems(req, res, next) {
     });
 }
 
+/**
+ * Sends a GET request to the database.
+ * Return values are based on the input parameters (in url, req.params).
+ * Most notably, __req.params.text__ holds the user's search input.
+ * This search input is parsed and an sql query is dynamically built
+ * based on that data along with the other input parameters:
+ * - __req.params.filter__ = Filter by lost or found items.
+ * - __req.params.postuser__ = Which user is making this request.
+ *  Used in posted/archived item searches.
+ * - __req.params.route__ = Stores whether the user is searching
+ *  through posted, archived, or all items.
+ */
 function searchItems(req, res, next) {
   const MINIMUMWORDLENGTH = 4; // minimum length of words included as search terms in the sql query
   let searchString = '';
@@ -217,16 +231,24 @@ function searchItems(req, res, next) {
       // if it is a significant word, add it to the search terms.
       searchString += "LOWER(title) LIKE LOWER('%" + searchArray[i] + "%') OR LOWER(description) LIKE LOWER('%" + searchArray[i] + "%') OR LOWER(location) LIKE LOWER('%" + searchArray[i] + "%')";
       if (i !== searchArray.length - 1) {
-        // if the last word is <= 3 characters, will cause an error.
+        // if the last word is < MINIMUMWORDLENGTH characters, will cause an error.
         searchString += ' OR ';
       }
     }
   }
   if (searchArray[searchArray.length - 1].length < MINIMUMWORDLENGTH && searchArray.length > 1) {
-    // if the last word is <= 3 characters, will cause an error.
+    // if the last word is < MINIMUMWORDLENGTH characters, will cause an error.
     searchString = searchString.slice(0, -3); // remove OR to fix the error
   }
-  db.many('SELECT Item.*, Users.name, Users.profileimage, Users.emailaddress FROM Item, Users WHERE Users.id=postuser AND (' + searchString + ') AND archived=FALSE ORDER BY Item.id ASC')
+  let searchRoute = ' AND archived=FALSE'; // default, searching through all items
+  if (req.params.route === 'post') {
+    searchRoute = ' AND postUser=' + req.params.postUser + ' AND archived=FALSE';
+  } else if (req.params.route === 'archived') {
+    searchRoute = ' AND postUser=' + req.params.postUser + ' AND archived=TRUE';
+  }
+  console.log(`params: ${req.params.postUser}, ${req.params.route}`);
+  console.log('SELECT Item.*, Users.name, Users.profileimage, Users.emailaddress FROM Item, Users WHERE Users.id=postuser AND (' + searchString + ')' + searchRoute + ' ORDER BY Item.id ASC');
+  db.many('SELECT Item.*, Users.name, Users.profileimage, Users.emailaddress FROM Item, Users WHERE Users.id=postuser AND (' + searchString + ')' + searchRoute + ' ORDER BY Item.id ASC')
     .then(async (data) => {
       const returnData = data; // work around eslint rule
       for (let i = 0; i < returnData.length; i++) {
