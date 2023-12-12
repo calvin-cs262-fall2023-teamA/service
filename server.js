@@ -65,7 +65,7 @@ router.get('/items/post/:postUser', readPostedItems); // posted items
 router.get('/items/archived/:postuser', readArchivedItems); // claimed items
 router.post('/users/image', updateUserImage); // put wasn't working, upload profile image
 // profile, main, and comments pages
-router.get('users/download/image', readUserImage); // download profile image
+router.get('users/image/:id', readUserImage); // download profile image
 
 // search
 router.get('/items/search/:title', searchItems); // search term in url
@@ -168,7 +168,7 @@ async function updateUserImage(req, res, next) {
 }
 
 async function readUserImage(req, res, next) {
-  db.oneOrNone('SELECT Users.imagecontainer, Users.imageblob FROM Users WHERE Users.id=postuser')
+  db.oneOrNone('SELECT Users.imagecontainer, Users.imageblob FROM Users WHERE id=${id}', req.params)
     .then(async (data) => {
       const returnData = data; // work around eslint rule
       if (data.imageblob !== 'null' && data.imageblob !== null) {
