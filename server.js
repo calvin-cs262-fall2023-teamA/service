@@ -23,6 +23,28 @@ const blobServiceClient = new BlobServiceClient(
 
 // Set up the database connection.
 
+/**
+ * This module implements a REST-inspired webservice for the CalvinFinds DB.
+ * The database is hosted on ElephantSQL.
+ *
+ * To guard against SQL injection attacks, this code uses pg-promise's built-in
+ * variable escaping. This prevents a client from issuing this URL:
+ *     https://calvinfinds.azurewebsites.net//comments/1%3BDELETE%20FROM%20Comment
+ * which would delete records in the PlayerGame and then the Player tables.
+ * In particular, we don't use JS template strings because it doesn't filter
+ * client-supplied values properly.
+ * TODO: Consider using Prepared Statements.
+ *      https://vitaly-t.github.io/pg-promise/PreparedStatement.html
+ *
+ * This service assumes that the database connection strings and the server mode are
+ * set in environment variables. See the DB_* variables used by pg-promise. And
+ * setting NODE_ENV to production will cause ExpressJS to serve up uninformative
+ * server error responses for all errors.
+ *
+ * @author: CalvinFinds Team
+ * @date: Fall, 2023
+ */
+
 const pgp = require('pg-promise')();
 
 const db = pgp({
@@ -52,10 +74,12 @@ router.put('/users/:id', updateUser);
 router.post('/users', createUser);
 router.delete('/users/:id', deleteUser);
 router.get('/users/email/:email', readUserFromEmail);
+
 // item functions
 router.get('/items', readItems);
 router.get('/items/:id', readItem);
 router.post('/items', createItems);
+router.post('/items/archive/:id', archiveItem);
 
 // login functions
 router.post('/login', handleLogin);
@@ -68,7 +92,9 @@ router.post('/users/image', updateUserImage); // put wasn't working, upload prof
 router.get('users/image/:id', readUserImage); // download profile image
 
 // search
-router.get('/items/search/:title', searchItems); // search term in url
+/* search term in url (text), lost/found filter (filter), the logged in user (for posted/archived)
+and whether the search should be for all items, posted items, or archived items */
+router.get('/items/search/:text/:postUser/:route', searchItems);
 
 // comments
 router.get('/comments', readAllComments);
@@ -198,7 +224,7 @@ async function createItems(req, res, next) {
 }
 
 async function readItems(req, res, next) {
-  db.many('SELECT Item.*, Users.name, Users.profileimage, Users.emailaddress FROM Item, Users WHERE Users.id=postuser ORDER BY Item.id ASC')
+  db.many('SELECT Item.*, Users.name, Users.profileimage, Users.emailaddress FROM Item, Users WHERE Users.id=postuser AND archived=FALSE ORDER BY Item.id ASC')
     .then(async (data) => {
       const returnData = data; // work around eslint rule
       for (let i = 0; i < returnData.length; i++) {
@@ -220,8 +246,46 @@ async function readItems(req, res, next) {
     });
 }
 
+/**
+ * Sends a GET request to the database.
+ * Return values are based on the input parameters (in url, req.params).
+ * Most notably, __req.params.text__ holds the user's search input.
+ * This search input is parsed and an sql query is dynamically built
+ * based on that data along with the other input parameters:
+ * - __req.params.filter__ = Filter by lost or found items.
+ * - __req.params.postuser__ = Which user is making this request.
+ *  Used in posted/archived item searches.
+ * - __req.params.route__ = Stores whether the user is searching
+ *  through posted, archived, or all items.
+ */
 function searchItems(req, res, next) {
-  db.many("SELECT Item.*, Users.name, Users.profileimage, Users.emailaddress FROM Item, Users WHERE Users.id=postuser AND title LIKE '%" + req.params.title + "%' ORDER BY Item.id ASC", req.params)
+  const MINIMUMWORDLENGTH = 4; // minimum length of words included as search terms in the sql query
+  let searchString = '';
+  const searchArray = (req.params.text).split(' ');
+  for (let i = 0; i < searchArray.length; i++) {
+    // if only one search term, search regardless of length
+    if (searchArray[i].length >= MINIMUMWORDLENGTH || searchArray.length === 1) {
+      // if it is a significant word, add it to the search terms.
+      searchString += "LOWER(title) LIKE LOWER('%" + searchArray[i] + "%') OR LOWER(description) LIKE LOWER('%" + searchArray[i] + "%') OR LOWER(location) LIKE LOWER('%" + searchArray[i] + "%')";
+      if (i !== searchArray.length - 1) {
+        // if the last word is < MINIMUMWORDLENGTH characters, will cause an error.
+        searchString += ' OR ';
+      }
+    }
+  }
+  if (searchArray[searchArray.length - 1].length < MINIMUMWORDLENGTH && searchArray.length > 1) {
+    // if the last word is < MINIMUMWORDLENGTH characters, will cause an error.
+    searchString = searchString.slice(0, -3); // remove OR to fix the error
+  }
+  let searchRoute = ' AND archived=FALSE'; // default, searching through all items
+  if (req.params.route === 'post') {
+    searchRoute = ' AND postUser=' + req.params.postUser + ' AND archived=FALSE';
+  } else if (req.params.route === 'archived') {
+    searchRoute = ' AND postUser=' + req.params.postUser + ' AND archived=TRUE';
+  }
+  console.log(`params: ${req.params.postUser}, ${req.params.route}`);
+  console.log('SELECT Item.*, Users.name, Users.profileimage, Users.emailaddress FROM Item, Users WHERE Users.id=postuser AND (' + searchString + ')' + searchRoute + ' ORDER BY Item.id ASC');
+  db.many('SELECT Item.*, Users.name, Users.profileimage, Users.emailaddress FROM Item, Users WHERE Users.id=postuser AND (' + searchString + ')' + searchRoute + ' ORDER BY Item.id ASC')
     .then(async (data) => {
       const returnData = data; // work around eslint rule
       for (let i = 0; i < returnData.length; i++) {
@@ -244,7 +308,7 @@ function searchItems(req, res, next) {
 }
 
 function readPostedItems(req, res, next) {
-  db.many("SELECT Item.*, Users.name, Users.profileimage, Users.emailaddress FROM Item, Users WHERE Users.id=postuser AND postUser='" + req.params.postUser + "' ORDER BY Item.id ASC", req.params) // should not return values where item.claimuser = item.postuser (indicates a deleted item.)
+  db.many("SELECT Item.*, Users.name, Users.profileimage, Users.emailaddress FROM Item, Users WHERE Users.id=postuser AND postUser='" + req.params.postUser + "' AND archived=FALSE ORDER BY Item.id ASC", req.params) // should not return values where item.claimuser = item.postuser (indicates a deleted item.)
     .then(async (data) => {
       const returnData = data; // work around eslint rule
       for (let i = 0; i < returnData.length; i++) {
@@ -291,6 +355,16 @@ function readArchivedItems(req, res, next) {
 
 function readItem(req, res, next) {
   db.oneOrNone('SELECT * FROM Item WHERE id=${id}', req.params)
+    .then((data) => {
+      returnDataOr404(res, data);
+    })
+    .catch((err) => {
+      next(err);
+    });
+}
+
+function archiveItem(req, res, next) {
+  db.none('UPDATE Item SET archived = true WHERE id=${id}', req.params)
     .then((data) => {
       returnDataOr404(res, data);
     })
