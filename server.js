@@ -172,7 +172,7 @@ async function readUserImage(req, res, next) {
     .then(async (data) => {
       const returnData = data; // work around eslint rule
       if (data.imageblob !== 'null' && data.imageblob !== null) {
-        returnData.itemimage = await downloadImage(
+        returnData.userimage = await downloadImage(
           returnData.imagecontainer,
           returnData.imageblob,
         );
@@ -310,8 +310,15 @@ function readAllComments(req, res, next) {
 }
 
 function readComments(req, res, next) {
-  db.many('SELECT Comment.*, Users.name, Users.profileImage FROM Comment, Users WHERE userID = users.ID AND itemID=${id}', req.params)
-    .then((data) => {
+  db.many('SELECT Comment.*, Users.name, Users.profileImage, Users.imagecontainer, Users.imageblob FROM Comment, Users WHERE userID = users.ID AND itemID=${id}', req.params)
+    .then(async (data) => {
+      const returnData = data; // work around eslint rule
+      if (data.imageblob !== 'null' && data.imageblob !== null) {
+        returnData.userimage = await downloadImage(
+          returnData.imagecontainer,
+          returnData.imageblob,
+        );
+      }
       returnDataOr404(res, data);
     })
     .catch((err) => {
