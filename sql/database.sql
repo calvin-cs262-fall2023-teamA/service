@@ -6,7 +6,6 @@
 DROP TABLE IF EXISTS Comment;
 DROP TABLE IF EXISTS Users;
 DROP TABLE IF EXISTS Item;
-DROP TABLE IF EXISTS Image;
 
 -- Create the schema.
 
@@ -15,9 +14,12 @@ CREATE TABLE Users (
 	ID SERIAL PRIMARY KEY, 
 	emailAddress varchar(50) NOT NULL,
 	name varchar(50),
+    -- password varchar(60), --"...the length of generated hashes is 60 characters." (https://www.npmjs.com/package/react-native-bcrypt)
     password varchar(100),
     type varchar(50),
-    profileImage varchar(250) --works the same way as itemImage
+    profileImage varchar(250), -- for storing uri of image. replaced by imageContainer/Blob, (currently) kept for support of old code
+    imageContainer varchar(36), -- a uuid, always 36 characters. Used to locate images in the storage account.
+    imageBlob varchar(40) -- a uuid, always 36 characters. Used to locate images in the storage account. Extra space for file extensions (.txt).
 );
 
 CREATE TABLE Item (
@@ -31,9 +33,9 @@ CREATE TABLE Item (
     postUser integer, -- an id of a user. "owner/finder"
 	claimUser integer, -- an id of a user. "owner/finder" CURRENTLY UNUSED but remains in db for future development.
     archived BOOLEAN, -- for removing listings from search results
-	itemImage text, -- for storing uri of image. should be removed later.
+	itemImage text, -- for storing uri of image. replaced by imageContainer/Blob, (currently) kept for support of old code
     imageContainer varchar(36), -- a uuid, always 36 characters. Used to locate images in the storage account.
-    imageBlob varchar(36) -- a uuid, always 36 characters. Used to locate images in the storage account.
+    imageBlob varchar(40) -- a uuid, always 36 characters. Used to locate images in the storage account. Extra space for file extensions (.txt).
 );
 
 CREATE TABLE Comment (
@@ -46,7 +48,6 @@ CREATE TABLE Comment (
 GRANT SELECT ON Comment TO PUBLIC;
 GRANT SELECT ON Users TO PUBLIC;
 GRANT SELECT ON Item TO PUBLIC;
-GRANT SELECT ON Image TO PUBLIC;
 
 -- Add sample records.
 -- The sample records are not manually added to the database as it has been implemented in the app.

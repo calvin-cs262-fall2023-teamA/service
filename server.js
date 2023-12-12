@@ -87,7 +87,9 @@ router.post('/login', handleLogin);
 // profile page
 router.get('/items/post/:postUser', readPostedItems); // posted items
 router.get('/items/archived/:postuser', readArchivedItems); // claimed items
-router.post('/users/image', updateUserImage);
+router.post('/users/image', updateUserImage); // put wasn't working, upload profile image
+// profile, main, and comments pages
+router.get('users/download/image', readUserImage); // download profile image
 
 // search
 /* search term in url (text), lost/found filter (filter), the logged in user (for posted/archived)
@@ -176,8 +178,43 @@ function deleteUser(req, res, next) {
     });
 }
 
-function updateUserImage(req, res, next) {
-  db.oneOrNone('UPDATE Users SET profileImage = ${image} WHERE id = ${id}', req.body)
+async function updateUserImage(req, res, next) {
+  // body includes userID and image data (uri)
+  /* upload new image data. */
+  const imagePath = (req.body.imagedata) ? await uploadImage(req.body.imagedata) : [null, null];
+
+  /* Send route to image data to the database */
+  db.oneOrNone('UPDATE Users SET imagecontainer = \'' + imagePath[0] + '\', imageblob = \'' + imagePath[1] + '\' WHERE id = ${id}', req.body)
+    .then((data) => {
+      res.send(data);
+    })
+    .catch((err) => {
+      next(err);
+    });
+}
+
+async function readUserImage(req, res, next) {
+  db.oneOrNone('SELECT Users.imagecontainer, Users.imageblob FROM Users WHERE Users.id=postuser')
+    .then(async (data) => {
+      const returnData = data; // work around eslint rule
+      if (data.imageblob !== 'null' && data.imageblob !== null) {
+        returnData.userimage = await downloadImage(
+          returnData.imagecontainer,
+          returnData.imageblob,
+        );
+      }
+      returnDataOr404(res, returnData);
+    })
+    .catch((err) => {
+      next(err);
+    });
+}
+
+async function createItems(req, res, next) {
+  // if image isn't null, upload its data
+  const imagePath = (req.body.imagedata) ? await uploadImage(req.body.imagedata) : [null, null];
+  // TODO: fix formatting of this query
+  db.one('INSERT INTO Item (title, description, category, location, lostFound, datePosted, postUser, claimUser, archived, itemImage, imageContainer, imageBlob) VALUES (${title}, ${description}, ${category}, ${location}, ${lostFound}, ${datePosted}, ${postUser}, ${claimUser}, ${archived}, \'../../assets/placeholder.jpg\', \'' + imagePath[0] + '\', \'' + imagePath[1] + '\')', req.body)
     .then((data) => {
       res.send(data);
     })
@@ -270,20 +307,6 @@ function searchItems(req, res, next) {
     });
 }
 
-async function createItems(req, res, next) {
-  const blockBlobClient = '../../assets/placeholder.jpg';
-  // if image isn't null, upload its data
-  const imagePath = (req.body.imagedata) ? await uploadImage(req.body.imagedata) : [null, null];
-  // TODO: fix formatting of this query
-  db.one('INSERT INTO Item (title, description, category, location, lostFound, datePosted, postUser, claimUser, archived, itemImage, imageContainer, imageBlob) VALUES (${title}, ${description}, ${category}, ${location}, ${lostFound}, ${datePosted}, ${postUser}, ${claimUser}, ${archived}, \'' + blockBlobClient + '\', \'' + imagePath[0] + '\', \'' + imagePath[1] + '\')', req.body)
-    .then((data) => {
-      res.send(data);
-    })
-    .catch((err) => {
-      next(err);
-    });
-}
-
 function readPostedItems(req, res, next) {
   db.many("SELECT Item.*, Users.name, Users.profileimage, Users.emailaddress FROM Item, Users WHERE Users.id=postuser AND postUser='" + req.params.postUser + "' AND archived=FALSE ORDER BY Item.id ASC", req.params) // should not return values where item.claimuser = item.postuser (indicates a deleted item.)
     .then(async (data) => {
@@ -361,8 +384,15 @@ function readAllComments(req, res, next) {
 }
 
 function readComments(req, res, next) {
-  db.many('SELECT Comment.*, Users.name, Users.profileImage FROM Comment, Users WHERE userID = users.ID AND itemID=${id}', req.params)
-    .then((data) => {
+  db.many('SELECT Comment.*, Users.name, Users.profileImage, Users.imagecontainer, Users.imageblob FROM Comment, Users WHERE userID = users.ID AND itemID=${id}', req.params)
+    .then(async (data) => {
+      const returnData = data; // work around eslint rule
+      if (data.imageblob !== 'null' && data.imageblob !== null) {
+        returnData.userimage = await downloadImage(
+          returnData.imagecontainer,
+          returnData.imageblob,
+        );
+      }
       returnDataOr404(res, data);
     })
     .catch((err) => {
