@@ -197,12 +197,13 @@ async function readUserImage(req, res, next) {
   db.oneOrNone('SELECT Users.imagecontainer, Users.imageblob FROM Users WHERE id=${id}', req.params)
     .then(async (data) => {
       const returnData = data; // work around eslint rule
-      if (data.imageblob !== 'null' && data.imageblob !== null) {
-        returnData.userimage = await downloadImage(
-          returnData.imagecontainer,
-          returnData.imageblob,
+      if (data[0].imageblob !== 'null' && data[0].imageblob !== null) {
+        returnData[0].userimage = await downloadImage(
+          returnData[0].imagecontainer,
+          returnData[0].imageblob,
         );
       }
+      console.log(`returnData: ${returnData}`);
       returnDataOr404(res, returnData);
     })
     .catch((err) => {
