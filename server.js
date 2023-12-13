@@ -421,11 +421,16 @@ function readComments(req, res, next) {
   db.many('SELECT Comment.*, Users.name, Users.profileImage, Users.imagecontainer, Users.imageblob FROM Comment, Users WHERE userID = users.ID AND itemID=${id}', req.params)
     .then(async (data) => {
       const returnData = data; // work around eslint rule
-      if (data[0].imageblob !== 'null' && data[0].imageblob !== null) {
-        returnData[0].userimage = await downloadImage(
-          returnData[0].imagecontainer,
-          returnData[0].imageblob,
-        );
+      for (let i = 0; i < returnData.length; i++) {
+        if (data[i].imageblob !== 'null' && data[i].imageblob !== null) {
+          /* await in loop: inefficient, but does need to be
+           done for every comment (that has an image loaded). */
+          // eslint-disable-next-line no-await-in-loop
+          returnData[i].userimage = await downloadImage(
+            returnData[i].imagecontainer,
+            returnData[i].imageblob,
+          );
+        }
       }
       returnDataOr404(res, data);
     })
