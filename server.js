@@ -81,9 +81,6 @@ router.get('/items/:id', readItem);
 router.post('/items', createItems);
 router.post('/items/archive/:id', archiveItem);
 
-// login functions
-router.post('/login', handleLogin);
-
 // profile page
 router.get('/items/post/:postUser', readPostedItems); // posted items
 router.get('/items/archived/:postuser', readArchivedItems); // claimed items
@@ -453,33 +450,6 @@ function postComment(req, res, next) {
     .catch((err) => {
       next(err);
     });
-}
-
-// Implement the user authentication route
-async function handleLogin(req, res) {
-  const { emailAddress, password } = req.body;
-
-  try {
-    // Query the database to find the user by email
-    const user = await db.oneOrNone('SELECT * FROM Users WHERE emailAddress = $1', emailAddress);
-
-    if (!user) {
-      // User not found
-      return res.status(401).json({ message: 'User not found' });
-    }
-
-    if (user.password === password) {
-      // Password matches, user is authenticated
-      return res.status(200).json({ message: 'Login successful' });
-    // eslint-disable-next-line no-else-return
-    } else {
-      // Incorrect password
-      return res.status(401).json({ message: 'Incorrect password' });
-    }
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: 'An error occurred during login' });
-  }
 }
 
 // Interact with storage account
