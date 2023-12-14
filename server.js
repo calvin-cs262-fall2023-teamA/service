@@ -261,7 +261,6 @@ async function readItems(req, res, next) {
  * Most notably, __req.params.text__ holds the user's search input.
  * This search input is parsed and an sql query is dynamically built
  * based on that data along with the other input parameters:
- * - __req.params.filter__ = Filter by lost or found items.
  * - __req.params.postuser__ = Which user is making this request.
  *  Used in posted/archived item searches.
  * - __req.params.route__ = Stores whether the user is searching
@@ -417,6 +416,13 @@ function readAllComments(req, res, next) {
     });
 }
 
+/**
+ * Returns a set of comments attached to an item.
+ * The specific information returned for each comment includes:
+ * - The commenting user's username
+ * - The commenting user's profile icon (retrieved from storage account)
+ * - The contents of the comment itself (text)
+ */
 function readComments(req, res, next) {
   db.many('SELECT Comment.*, Users.name, Users.profileImage, Users.imagecontainer, Users.imageblob FROM Comment, Users WHERE userID = users.ID AND itemID=${id}', req.params)
     .then(async (data) => {
@@ -484,7 +490,7 @@ async function handleLogin(req, res) {
  * Creates a container and blob in the storage account
  * @param {*} data byte64 data that should be received from the client
  * @returns an array containing values that refer to a blob in the storage account.
- * - Return is the values needed to make a blockBlobClient for downloading.
+ * - Return includes the values needed to make a blockBlobClient for downloading images.
  */
 async function uploadImage(data) {
   const containerName = uuidv1();
