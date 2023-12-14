@@ -14,8 +14,7 @@ CREATE TABLE Users (
 	ID SERIAL PRIMARY KEY, 
 	emailAddress varchar(50) NOT NULL,
 	name varchar(50),
-    -- password varchar(60), --"...the length of generated hashes is 60 characters." (https://www.npmjs.com/package/react-native-bcrypt)
-    password varchar(100),
+    password varchar(100), -- hashed passwords (bcrypt)
     type varchar(50),
     profileImage varchar(250), -- for storing uri of image. replaced by imageContainer/Blob, (currently) kept for support of old code
     imageContainer varchar(36), -- a uuid, always 36 characters. Used to locate images in the storage account.
@@ -54,10 +53,6 @@ GRANT SELECT ON Item TO PUBLIC;
 
 -- INSERT INTO Users VALUES (1, 'admin@calvin.edu', 'Admin', 'password', 'Admin');
 -- INSERT INTO Users VALUES (2, 'aj37@calvin.edu', 'Aishwarya Joshi', 'password', 'Standard');
-
--- INSERT INTO Item(ID, name, description, category, location, status) VALUES (1, 'Bottle', 'A blue 700ml bottle.', 'personal item', 'north hall', 'not claimed');
--- INSERT INTO Item VALUES (2, 'Socks', 'A calvin sock.', 'personal item', 'north hall', 'not claimed');
--- INSERT INTO Item VALUES (3, 'Book', 'Advanced Networking Book', 'personal item', 'north hall', 'not claimed');
 
 -- sample "items"
 -- INSERT INTO Item (title, description, category, location, lostfound, datePosted, postUser, claimUser, archived, imageContainer, imageBlob) VALUES ('Charger', 'Laptop charger', 'electronics', 'Commons', 'found', '11/6/2023', 2, null, FALSE, 'demo', 'charger.txt');
