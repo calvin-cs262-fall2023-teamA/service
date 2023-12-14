@@ -26,3 +26,5 @@ It has the following data route URLs:
 It is based on the standard Azure App Service tutorial for Node.js.   
 
 The database is relational with the schema specified in the sql/ sub-directory and is hosted on [ElephantSQL](https://customer.elephantsql.com/instance). The database server, user and password are stored as Azure application settings so that they aren’t exposed in this (public) repo.
+
+This data service is implemented for the client application [CalvinFinds](https://github.com/calvin-cs262-fall2023-teamA/client).
