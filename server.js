@@ -89,7 +89,7 @@ router.get('/items/post/:postUser', readPostedItems); // posted items
 router.get('/items/archived/:postuser', readArchivedItems); // claimed items
 router.post('/users/image', updateUserImage); // put wasn't working, upload profile image
 // profile, main, and comments pages
-router.get('users/image/:id', readUserImage); // download profile image
+router.get('/users/image/:id', readUserImage); // download profile image
 
 // search
 /* search term in url (text), lost/found filter (filter), the logged in user (for posted/archived)
@@ -193,7 +193,7 @@ async function updateUserImage(req, res, next) {
     });
 }
 
-async function readUserImage(req, res, next) {
+function readUserImage(req, res, next) {
   db.oneOrNone('SELECT Users.imagecontainer, Users.imageblob FROM Users WHERE id=${id}', req.params)
     .then(async (data) => {
       const returnData = data; // work around eslint rule
@@ -224,7 +224,7 @@ async function createItems(req, res, next) {
 }
 
 async function readItems(req, res, next) {
-  db.many('SELECT Item.*, Users.name, Users.profileimage, Users.emailaddress FROM Item, Users WHERE Users.id=postuser AND archived=FALSE ORDER BY Item.id ASC')
+  db.many('SELECT Item.*, Users.name, Users.profileimage, Users.emailaddress, Users.imagecontainer AS usercontainer, Users.imageblob AS userblob FROM Item, Users WHERE Users.id=postuser AND archived=FALSE ORDER BY Item.id ASC')
     .then(async (data) => {
       const returnData = data; // work around eslint rule
       for (let i = 0; i < returnData.length; i++) {
@@ -236,6 +236,15 @@ async function readItems(req, res, next) {
           returnData[i].itemimage = await downloadImage(
             returnData[i].imagecontainer,
             returnData[i].imageblob,
+          );
+        }
+        if (returnData[i].userblob !== 'null' && returnData[i].userblob !== null) {
+          /* await in loop: inefficient, but does need to be
+           done for every item (that has an image loaded). */
+          // eslint-disable-next-line no-await-in-loop
+          returnData[i].profileimage = await downloadImage(
+            returnData[i].usercontainer,
+            returnData[i].userblob,
           );
         }
       }
@@ -283,9 +292,7 @@ function searchItems(req, res, next) {
   } else if (req.params.route === 'archived') {
     searchRoute = ' AND postUser=' + req.params.postUser + ' AND archived=TRUE';
   }
-  console.log(`params: ${req.params.postUser}, ${req.params.route}`);
-  console.log('SELECT Item.*, Users.name, Users.profileimage, Users.emailaddress FROM Item, Users WHERE Users.id=postuser AND (' + searchString + ')' + searchRoute + ' ORDER BY Item.id ASC');
-  db.many('SELECT Item.*, Users.name, Users.profileimage, Users.emailaddress FROM Item, Users WHERE Users.id=postuser AND (' + searchString + ')' + searchRoute + ' ORDER BY Item.id ASC')
+  db.many('SELECT Item.*, Users.name, Users.profileimage, Users.emailaddress, Users.imagecontainer AS userContainer, Users.imageblob AS userBlob FROM Item, Users WHERE Users.id=postuser AND (' + searchString + ')' + searchRoute + ' ORDER BY Item.id ASC')
     .then(async (data) => {
       const returnData = data; // work around eslint rule
       for (let i = 0; i < returnData.length; i++) {
@@ -297,6 +304,15 @@ function searchItems(req, res, next) {
           returnData[i].itemimage = await downloadImage(
             returnData[i].imagecontainer,
             returnData[i].imageblob,
+          );
+        }
+        if (returnData[i].userblob !== 'null' && returnData[i].userblob !== null) {
+          /* await in loop: inefficient, but does need to be
+           done for every item (that has an image loaded). */
+          // eslint-disable-next-line no-await-in-loop
+          returnData[i].profileimage = await downloadImage(
+            returnData[i].usercontainer,
+            returnData[i].userblob,
           );
         }
       }
@@ -308,7 +324,7 @@ function searchItems(req, res, next) {
 }
 
 function readPostedItems(req, res, next) {
-  db.many("SELECT Item.*, Users.name, Users.profileimage, Users.emailaddress FROM Item, Users WHERE Users.id=postuser AND postUser='" + req.params.postUser + "' AND archived=FALSE ORDER BY Item.id ASC", req.params) // should not return values where item.claimuser = item.postuser (indicates a deleted item.)
+  db.many("SELECT Item.*, Users.name, Users.profileimage, Users.emailaddress, Users.imagecontainer AS userContainer, Users.imageblob AS userBlob FROM Item, Users WHERE Users.id=postuser AND postUser='" + req.params.postUser + "' AND archived=FALSE ORDER BY Item.id ASC", req.params) // should not return values where item.claimuser = item.postuser (indicates a deleted item.)
     .then(async (data) => {
       const returnData = data; // work around eslint rule
       for (let i = 0; i < returnData.length; i++) {
@@ -322,6 +338,15 @@ function readPostedItems(req, res, next) {
             returnData[i].imageblob,
           );
         }
+        if (returnData[i].userblob !== 'null' && returnData[i].userblob !== null) {
+          /* await in loop: inefficient, but does need to be
+           done for every item (that has an image loaded). */
+          // eslint-disable-next-line no-await-in-loop
+          returnData[i].profileimage = await downloadImage(
+            returnData[i].usercontainer,
+            returnData[i].userblob,
+          );
+        }
       }
       returnDataOr404(res, data);
     })
@@ -331,7 +356,7 @@ function readPostedItems(req, res, next) {
 }
 
 function readArchivedItems(req, res, next) {
-  db.many("SELECT Item.*, Users.name, Users.profileimage, Users.emailaddress FROM Item, Users WHERE Users.id=postuser AND postUser='" + req.params.postuser + "' AND archived=TRUE ORDER BY Item.id ASC", req.params) // returns archived items, not claimed. will refactor later.
+  db.many("SELECT Item.*, Users.name, Users.profileimage, Users.emailaddress, Users.imagecontainer AS userContainer, Users.imageblob AS userBlob FROM Item, Users WHERE Users.id=postuser AND postUser='" + req.params.postuser + "' AND archived=TRUE ORDER BY Item.id ASC", req.params) // returns archived items, not claimed. will refactor later.
     .then(async (data) => {
       const returnData = data; // work around eslint rule
       for (let i = 0; i < returnData.length; i++) {
@@ -343,6 +368,15 @@ function readArchivedItems(req, res, next) {
           returnData[i].itemimage = await downloadImage(
             returnData[i].imagecontainer,
             returnData[i].imageblob,
+          );
+        }
+        if (returnData[i].userblob !== 'null' && returnData[i].userblob !== null) {
+          /* await in loop: inefficient, but does need to be
+           done for every item (that has an image loaded). */
+          // eslint-disable-next-line no-await-in-loop
+          returnData[i].profileimage = await downloadImage(
+            returnData[i].usercontainer,
+            returnData[i].userblob,
           );
         }
       }
@@ -387,11 +421,16 @@ function readComments(req, res, next) {
   db.many('SELECT Comment.*, Users.name, Users.profileImage, Users.imagecontainer, Users.imageblob FROM Comment, Users WHERE userID = users.ID AND itemID=${id}', req.params)
     .then(async (data) => {
       const returnData = data; // work around eslint rule
-      if (data.imageblob !== 'null' && data.imageblob !== null) {
-        returnData.userimage = await downloadImage(
-          returnData.imagecontainer,
-          returnData.imageblob,
-        );
+      for (let i = 0; i < returnData.length; i++) {
+        if (data[i].imageblob !== 'null' && data[i].imageblob !== null) {
+          /* await in loop: inefficient, but does need to be
+           done for every comment (that has an image loaded). */
+          // eslint-disable-next-line no-await-in-loop
+          returnData[i].userimage = await downloadImage(
+            returnData[i].imagecontainer,
+            returnData[i].imageblob,
+          );
+        }
       }
       returnDataOr404(res, data);
     })
