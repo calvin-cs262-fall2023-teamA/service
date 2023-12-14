@@ -417,7 +417,7 @@ function readAllComments(req, res, next) {
 }
 
 /**
- * Returns a set of comments attached to an image.
+ * Returns a set of comments attached to an item.
  * The specific information returned for each comment includes:
  * - The commenting user's username
  * - The commenting user's profile icon (retrieved from storage account)
